@@ -1,12 +1,12 @@
 #!/bin/bash
 set -u
 
-ngxver="1.10.0" # Current nginx version
+ngxver="1.11.0" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
 ## For use when generating patches
-# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
+# diff -ur nginx-1.11.0/ nginx-1.11.0-patched/ > ../boring.patch
 
 
 # Install deps & remove old nginx if we installed it with apt
@@ -38,8 +38,8 @@ cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
 # Config nginx
 cd "$bdir"
 wget "http://nginx.org/download/nginx-$ngxver.tar.gz"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/boring.patch"
-tar zxvf "nginx-$ngxver.tar.gz"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/boring.patch"
+if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 1; fi
 cd "$bdir/nginx-$ngxver"
 ./configure \
 	--prefix=/usr/share/nginx \
@@ -86,7 +86,7 @@ sudo make install
 
 # Add systemd service
 cd "$bdir/"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/nginx.service"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/nginx.service"
 cp -f -v nginx.service "/lib/systemd/system/nginx.service"
 
 echo ""
