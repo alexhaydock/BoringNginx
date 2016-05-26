@@ -87,7 +87,7 @@ sudo make install
 # Add systemd service
 cd "$bdir/"
 wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/nginx.service"
-cp -f -v nginx.service "/lib/systemd/system/nginx.service"
+sudo cp -f -v nginx.service "/lib/systemd/system/nginx.service"
 
 echo ""
 sudo /usr/sbin/nginx -V
