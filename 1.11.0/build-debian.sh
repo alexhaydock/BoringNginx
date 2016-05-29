@@ -13,7 +13,7 @@ bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 sudo systemctl stop nginx
 sudo systemctl disable nginx
 sudo apt purge nginx
-sudo apt install build-essential cmake git golang libpcre3-dev wget
+sudo apt install build-essential cmake git golang libpcre3-dev wget zlib1g-dev
 
 
 # Build BoringSSL
