@@ -1,5 +1,6 @@
 #!/bin/bash
 set -u
+if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
 ngxver="1.11.0" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory

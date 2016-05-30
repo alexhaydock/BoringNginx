@@ -2,19 +2,19 @@
 set -u
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
-ngxver="1.10.0" # Target nginx version
+ngxver="1.11.0" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
 ## For use when generating patches
-# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
+# diff -ur nginx-1.11.0/ nginx-1.11.0-patched/ > ../boring.patch
 
 
 # Install deps & remove old nginx if we installed it with apt
 sudo systemctl stop nginx
 sudo systemctl disable nginx
 sudo apt purge nginx
-sudo apt install build-essential cmake git golang libpcre3-dev wget zlib1g-dev
+sudo apt install build-essential cmake git golang libpcre3-dev wget zlib1g-dev libcurl4-openssl-dev
 
 
 # Build BoringSSL
@@ -69,7 +69,8 @@ cd "$bdir/nginx-$ngxver"
         --without-mail_smtp_module \
 	--with-openssl="$bdir/boringssl" \
 	--with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
-	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib"
+	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
+	--add-module="/var/lib/gems/$(gem --version)/gems/passenger-$(passenger --version | cut -d" " -f3)/src/nginx_module"
 
 
 # Fix "Error 127" during build
