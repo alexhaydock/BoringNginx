@@ -70,7 +70,7 @@ cd "$bdir/nginx-$ngxver"
 	--with-openssl="$bdir/boringssl" \
 	--with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
 	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
-	--add-module="/var/lib/gems/$(gem --version)/gems/passenger-$(passenger --version | cut -d" " -f3)/src/nginx_module"
+	--add-module="$(passenger-config --root)/src/nginx_module"
 
 
 # Fix "Error 127" during build
