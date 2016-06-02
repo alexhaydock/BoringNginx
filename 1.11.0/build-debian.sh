@@ -10,11 +10,30 @@ bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 # diff -ur nginx-1.11.0/ nginx-1.11.0-patched/ > ../boring.patch
 
 
+# Prompt our user before we start removing stuff
+CONFIRMED=0
+echo -e "This script will remove any versions of Nginx you installed using apt, and\nreplace any version of Nginx built with a previous version of this script."
+while true
+do
+	echo ""
+	read -p "Do you wish to continue? (Y/N)" answer
+	case $answer in
+		[yY]* )
+			CONFIRMED=1
+			break;;
+
+		* )
+			echo "Please enter 'Y' to continue or use ^C to exit.";;
+	esac
+done
+if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting."; fi
+
+
 # Install deps & remove old nginx if we installed it with apt
 sudo systemctl stop nginx
 sudo systemctl disable nginx
-sudo apt purge nginx
-sudo apt install build-essential cmake git golang libpcre3-dev wget zlib1g-dev
+sudo apt remove nginx nginx-common nginx-full nginx-light
+sudo apt install build-essential cmake git golang libpcre3-dev wget zlib1g-dev libcurl4-openssl-dev
 
 
 # Build BoringSSL
