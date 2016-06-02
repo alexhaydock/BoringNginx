@@ -26,7 +26,7 @@ do
 			echo "Please enter 'Y' to continue or use ^C to exit.";;
 	esac
 done
-if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting."; fi
+if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting." && exit 1; fi
 
 
 # Install deps & remove old nginx if we installed it with apt
@@ -59,7 +59,7 @@ cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
 cd "$bdir"
 wget "http://nginx.org/download/nginx-$ngxver.tar.gz"
 wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/boring.patch"
-if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 1; fi
+if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 2; fi
 cd "$bdir/nginx-$ngxver"
 ./configure \
 	--prefix=/usr/share/nginx \
