@@ -2,12 +2,23 @@
 set -u
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
-ngxver="1.10.0" # Target nginx version
+
+## Note to self. (For use when generating patches).
+# diff -ur nginx-1.11.1/ nginx-1.11.1-patched/ > ../boring.patch
+
+
+ngxver="1.11.1" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
-## For use when generating patches
-# diff -ur nginx-1.11.0/ nginx-1.11.0-patched/ > ../boring.patch
+# Handle arguments passed to the script. Currently only accepts the flag to
+# include passenger at compile time,but I might add a help section or more options soon.
+while [ "$#" -gt 0 ]; do
+	case $1 in
+		--passenger|-passenger|passenger) PASSENGER="1"; shift 1;;
+		*) echo "Invalid argument: $1" && exit 10;;
+	esac
+done
 
 
 # Prompt our user before we start removing stuff
@@ -55,14 +66,16 @@ cd "$bdir/boringssl"
 cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
 
 
-# Config nginx
+# Download and prepare nginx
 cd "$bdir"
 wget "http://nginx.org/download/nginx-$ngxver.tar.gz"
 wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/boring.patch"
 if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 2; fi
 cd "$bdir/nginx-$ngxver"
-./configure \
-	--prefix=/usr/share/nginx \
+
+
+# Define default options for the ./configure command
+DEFCONFIG="--prefix=/usr/share/nginx \
 	--sbin-path=/usr/sbin/nginx \
 	--conf-path=/etc/nginx/nginx.conf \
 	--error-log-path=/var/log/nginx/error.log \
@@ -86,10 +99,20 @@ cd "$bdir/nginx-$ngxver"
         --without-mail_pop3_module \
         --without-mail_imap_module \
         --without-mail_smtp_module \
-	--with-openssl="$bdir/boringssl" \
-	--with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
-	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
-	--add-module="$(passenger-config --root)/src/nginx_module"
+	--with-openssl=$bdir/boringssl \
+	--with-cc-opt=-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/ \
+	--with-ld-opt=-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib"
+
+
+# Config nginx based on the flags passed to the script, if any
+if [ $PASSENGER -eq 1 ]; then
+	echo "" && echo "Phusion Passenger module enabled."
+	USEDCONFIG="$DEFCONFIG --add-module=$(passenger-config --root)/src/nginx_module"
+fi
+
+
+# Run the config
+./configure $USEDCONFIG
 
 
 # Fix "Error 127" during build

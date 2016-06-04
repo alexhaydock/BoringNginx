@@ -42,9 +42,9 @@ Install Passenger (tool for deploying Rails apps):
 sudo gem install passenger
 ```
 
-Run the Passenger version of the BoringNginx build script:
+To run the Passenger version of the BoringNginx build script:
 ```bash
-./build-debian-passenger.sh
+./build-debian.sh --passenger
 ```
 
 Since building in this fashion bypasses Passenger's auto-compile script that automatically builds its module into Nginx for you, you will also miss out on some of the other things the script does.
