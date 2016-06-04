@@ -4,10 +4,10 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 
 
 ## Note to self. (For use when generating patches).
-# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
+# diff -ur nginx-1.11.1/ nginx-1.11.1-patched/ > ../boring.patch
 
 
-ngxver="1.10.0" # Target nginx version
+ngxver="1.11.0" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
@@ -75,8 +75,21 @@ if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else ech
 cd "$bdir/nginx-$ngxver"
 
 
-# Define default options for the ./configure command
-DEFCONFIG="--prefix=/usr/share/nginx \
+# Config nginx based on the flags passed to the script, if any
+EXTRACONFIG=""
+WITHROOT=""
+if [ $PASSENGER -eq 1 ]
+then
+	echo "" && echo "Phusion Passenger module enabled."
+	sudo gem install rails
+	sudo gem install passenger
+	EXTRACONFIG="$EXTRACONFIG --add-module=$(passenger-config --root)/src/nginx_module"
+	WITHROOT="sudo " # Passenger needs root to read/write to /var/lib/gems
+fi
+
+
+# Run the config with default options and append any additional options specified by the above section
+$WITHROOT./configure --prefix=/usr/share/nginx \
 	--sbin-path=/usr/sbin/nginx \
 	--conf-path=/etc/nginx/nginx.conf \
 	--error-log-path=/var/log/nginx/error.log \
@@ -100,20 +113,10 @@ DEFCONFIG="--prefix=/usr/share/nginx \
         --without-mail_pop3_module \
         --without-mail_imap_module \
         --without-mail_smtp_module \
-	--with-openssl=$bdir/boringssl \
-	--with-cc-opt=-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/ \
-	--with-ld-opt=-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib"
-
-
-# Config nginx based on the flags passed to the script, if any
-if [ $PASSENGER -eq 1 ]; then
-	echo "" && echo "Phusion Passenger module enabled."
-	USEDCONFIG="$DEFCONFIG --add-module=$(passenger-config --root)/src/nginx_module"
-fi
-
-
-# Run the config
-./configure $USEDCONFIG
+	--with-openssl="$bdir/boringssl" \
+	--with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
+	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
+	$EXTRACONFIG
 
 
 # Fix "Error 127" during build
@@ -125,7 +128,7 @@ patch -p1 < "../boring.patch"
 
 
 # Build nginx
-make
+make # Fortunately we can get away without root here, even for Passenger installs
 sudo make install
 
 
