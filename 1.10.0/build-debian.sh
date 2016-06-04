@@ -4,7 +4,7 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 
 
 ## Note to self. (For use when generating patches).
-# diff -ur nginx-1.11.0/ nginx-1.11.0-patched/ > ../boring.patch
+# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
 
 
 ngxver="1.10.0" # Target nginx version
@@ -13,6 +13,7 @@ bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 # Handle arguments passed to the script. Currently only accepts the flag to
 # include passenger at compile time,but I might add a help section or more options soon.
+PASSENGER=0
 while [ "$#" -gt 0 ]; do
 	case $1 in
 		--passenger|-passenger|passenger) PASSENGER="1"; shift 1;;

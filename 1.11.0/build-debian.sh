@@ -13,6 +13,7 @@ bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 # Handle arguments passed to the script. Currently only accepts the flag to
 # include passenger at compile time,but I might add a help section or more options soon.
+PASSENGER=0
 while [ "$#" -gt 0 ]; do
 	case $1 in
 		--passenger|-passenger|passenger) PASSENGER="1"; shift 1;;

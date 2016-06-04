@@ -1,4 +1,7 @@
-# BoringNginx
+BoringNginx
+=========
+<img align="right" src="https://raw.githubusercontent.com/ajhaydock/BoringNginx/master/nginx.png" alt="Nginx Logo" title="Nginx">
+
 Build script to build current stable Nginx with Google's BoringSSL instead of the default OpenSSL.
 
 This allows you to use some state-of-the-art crypto features not yet available in OpenSSL, like [ChaCha20-Poly1305](https://boringssl.googlesource.com/boringssl/+/de0b2026841c34193cacf5c97646b38439e13200) as a cipher/MAC combo, and [X25519](https://boringssl.googlesource.com/boringssl/+/4fb0dc4b031df7c9ac9d91fc34536e4e08b35d6a) (aka Curve25519) as the ECDHE curve provider if you want to get away from using [unsafe NIST curves](https://safecurves.cr.yp.to/) (though you probably want to check the X25519 [browser support matrix](https://www.chromestatus.com/feature/5682529109540864) before trying that).
@@ -6,6 +9,7 @@ This allows you to use some state-of-the-art crypto features not yet available i
 #### Currently Tested Working On:
 * **Nginx 1.10.0** - Debian Jessie *(with Grsec/PaX)*, Debian Stretch *(with Grsec/PaX)*
 * **Nginx 1.11.0** - Debian Jessie *(with Grsec/PaX)*, Debian Stretch *(with Grsec/PaX)*
+* **Nginx 1.11.1** - Debian Jessie *(with Grsec/PaX)*, Debian Stretch *(with Grsec/PaX)*
 
 ### Enabling PHP
 To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
