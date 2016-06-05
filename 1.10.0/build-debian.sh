@@ -7,7 +7,7 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 # diff -ur nginx-1.11.1/ nginx-1.11.1-patched/ > ../boring.patch
 
 
-ngxver="1.11.0" # Target nginx version
+ngxver="1.10.0" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
