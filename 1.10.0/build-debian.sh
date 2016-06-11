@@ -4,7 +4,7 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 
 
 ## Note to self. (For use when generating patches).
-# diff -ur nginx-1.11.1/ nginx-1.11.1-patched/ > ../boring.patch
+# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
 
 
 ngxver="1.10.0" # Target nginx version
@@ -67,6 +67,10 @@ cd "$bdir/boringssl"
 cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
 
 
+# Download "ngx_headers_more" module for finer-grained control over server headers
+git clone https://github.com/openresty/headers-more-nginx-module.git "$bdir/ngx_headers_more"
+
+
 # Download and prepare nginx
 cd "$bdir"
 wget "http://nginx.org/download/nginx-$ngxver.tar.gz"
@@ -113,6 +117,7 @@ $WITHROOT./configure --prefix=/usr/share/nginx \
         --without-mail_pop3_module \
         --without-mail_imap_module \
         --without-mail_smtp_module \
+	--add-module="$bdir/ngx_headers_more" \
 	--with-openssl="$bdir/boringssl" \
 	--with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
 	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
