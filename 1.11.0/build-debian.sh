@@ -58,7 +58,7 @@ make
 
 # Make an .openssl directory for nginx and then symlink BoringSSL's include directory tree
 mkdir -p "$bdir/boringssl/.openssl/lib"
-cd "$bdir/boringssl/.openssl" 
+cd "$bdir/boringssl/.openssl"
 ln -s ../include
 
 
@@ -142,6 +142,11 @@ cd "$bdir/"
 wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/nginx.service"
 sudo cp -f -v nginx.service "/lib/systemd/system/nginx.service"
 
+# Enable & start service
+sudo systemctl enable nginx.service
+sudo systemctl start nginx.service
+
+# Finish script
 echo ""
 sudo /usr/sbin/nginx -V
 echo ""
