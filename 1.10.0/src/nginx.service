@@ -8,7 +8,7 @@
 # SIGKILL to all the remaining processes in the process group (KillMode=mixed).
 #
 # nginx signals reference doc:
-# http://nginx.org/en/docs/control.html
+# https://nginx.org/en/docs/control.html
 #
 [Unit]
 Description=A high performance web server and a reverse proxy server
