@@ -4,10 +4,10 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 
 
 ## Note to self. (For use when generating patches).
-# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
+# diff -ur nginx-1.11.0/ nginx-1.11.0-patched/ > ../boring.patch
 
 
-ngxver="1.10.0" # Target nginx version
+ngxver="1.11.0" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
@@ -74,7 +74,7 @@ git clone https://github.com/openresty/headers-more-nginx-module.git "$bdir/ngx_
 # Download and prepare nginx
 cd "$bdir"
 wget --https-only "https://nginx.org/download/nginx-$ngxver.tar.gz"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/boring.patch"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver.patch"
 if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 2; fi
 cd "$bdir/nginx-$ngxver"
 
@@ -139,7 +139,7 @@ sudo make install
 
 # Add systemd service
 cd "$bdir/"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/nginx.service"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/nginx.service"
 sudo cp -f -v nginx.service "/lib/systemd/system/nginx.service"
 
 # Enable & start service

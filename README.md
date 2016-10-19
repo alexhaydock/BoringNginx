@@ -13,6 +13,7 @@ This allows you to use some state-of-the-art crypto features not yet available i
 | Nginx 1.11.1 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
 | Nginx 1.11.3 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
 | Nginx 1.11.4 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
+| Nginx 1.11.5 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
 
 ### Enabling PHP
 To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).

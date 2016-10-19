@@ -74,7 +74,7 @@ git clone https://github.com/openresty/headers-more-nginx-module.git "$bdir/ngx_
 # Download and prepare nginx
 cd "$bdir"
 wget --https-only "https://nginx.org/download/nginx-$ngxver.tar.gz"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/boring.patch"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver.patch"
 if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 2; fi
 cd "$bdir/nginx-$ngxver"
 
@@ -139,7 +139,7 @@ sudo make install
 
 # Add systemd service
 cd "$bdir/"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver/src/nginx.service"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/nginx.service"
 sudo cp -f -v nginx.service "/lib/systemd/system/nginx.service"
 
 # Enable & start service
