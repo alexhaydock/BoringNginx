@@ -4,7 +4,7 @@ BoringNginx
 
 Build script to build current stable Nginx with Google's BoringSSL instead of the default OpenSSL.
 
-This allows you to use some state-of-the-art crypto features not yet available in the stable branch of OpenSSL, like [ChaCha20-Poly1305](https://boringssl.googlesource.com/boringssl/+/de0b2026841c34193cacf5c97646b38439e13200) as a cipher/MAC combo, and [X25519](https://boringssl.googlesource.com/boringssl/+/4fb0dc4b031df7c9ac9d91fc34536e4e08b35d6a) (aka Curve25519) as the ECDHE curve provider if you want to get away from using [unsafe NIST curves](https://safecurves.cr.yp.to/) (though you probably want to check the X25519 [browser support matrix](https://www.chromestatus.com/feature/5682529109540864) before trying that).
+This allows you to use some state-of-the-art crypto features ~~not yet available in the stable branch of OpenSSL~~ (these features [have now entered stable, as of Sep 2016](https://www.openssl.org/news/newslog.html)), like [ChaCha20-Poly1305](https://boringssl.googlesource.com/boringssl/+/de0b2026841c34193cacf5c97646b38439e13200) as a cipher/MAC combo, and [X25519](https://boringssl.googlesource.com/boringssl/+/4fb0dc4b031df7c9ac9d91fc34536e4e08b35d6a) (aka Curve25519) as the ECDHE curve provider if you want to get away from using [unsafe NIST curves](https://safecurves.cr.yp.to/) (though you probably want to check the X25519 [browser support matrix](https://www.chromestatus.com/feature/5682529109540864) before trying that).
 
 | Version      | Tested Working On              |                                 |
 |--------------|--------------------------------|---------------------------------|
@@ -14,6 +14,13 @@ This allows you to use some state-of-the-art crypto features not yet available i
 | Nginx 1.11.3 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
 | Nginx 1.11.4 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
 | Nginx 1.11.5 | Debian Jessie (with Grsec/PaX) | Debian Stretch (with Grsec/PaX) |
+
+### WARNING!
+I don't recommend running this script on any production machines without going through and testing it first. It's designed to go through and remove any existing `nginx` installation, then compiles nginx and assumes you then want it installed too. It does everything in `/tmp`, which might work for some people, but you might want to change this for other reasons. I'm also not sure how it might interact with other complex setups that people may be running.
+
+If you're running this on a blank machine or inside a Docker container or something, then go right ahead... it should set everything up for you and work pretty much out of the box - but if you're installing this to replace your current version of `nginx` on a production server, I'd recommend maybe going through and running each command manually on an individual basis, or at least testing the script first, then tweaking it to your needs.
+
+With that out of the way, I hope you find some use for this script or these patches. Enjoy! :)
 
 ### Enabling PHP
 To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
