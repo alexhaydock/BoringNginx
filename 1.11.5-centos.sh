@@ -1,5 +1,5 @@
 #!/bin/bash
-set -u
+set -e
 shopt -s extglob
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
@@ -8,11 +8,9 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 # diff -ur nginx-1.11.5/ nginx-1.11.5-patched/ > ../boring.patch
 
 
+ngxver="1.11.5"		# Target nginx version
 rpath="$(cd $(dirname $0) && pwd)" # Run path
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
-
-ngxver="1.11.5"		# Target nginx version
-libresslver="2.4.2"	# LibreSSL version
 
 
 # Handle arguments passed to the script. Currently only accepts the flag to
