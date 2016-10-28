@@ -1,5 +1,6 @@
 #!/bin/bash
 set -u
+shopt -s extglob
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
 
@@ -7,8 +8,11 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 # diff -ur nginx-1.11.5/ nginx-1.11.5-patched/ > ../boring.patch
 
 
-ngxver="1.11.5" # Target nginx version
+rpath="$(cd $(dirname $0) && pwd)" # Run path
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
+
+ngxver="1.11.5"		# Target nginx version
+libresslver="2.4.2"	# LibreSSL version
 
 
 # Handle arguments passed to the script. Currently only accepts the flag to
@@ -24,7 +28,7 @@ done
 
 # Prompt our user before we start removing stuff
 CONFIRMED=0
-echo -e "This script will remove any versions of Nginx you installed using apt, and\nreplace any version of Nginx built with a previous version of this script."
+echo -e "This script will remove any versions of Nginx you installed using yum, and\nreplace any version of Nginx built with a previous version of this script."
 while true
 do
 	echo ""
@@ -41,113 +45,73 @@ done
 if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting." && exit 1; fi
 
 
-# Install deps & remove old nginx if we installed it with apt
+# Install deps
 sudo systemctl stop nginx
 sudo systemctl disable nginx
 sudo yum -y install cmake gcc gcc-c++ gd-devel GeoIP-devel git golang libxslt-devel patch pcre-devel perl-devel perl-ExtUtils-Embed rpm-build wget
 
 
+# Prepare nginx source
+mkdir "$bdir" && mkdir -p "$rpath/source" && cd "$rpath/source"
+[ $(($(expr $ngxver : '..\([0-9]*\).*')%2)) -eq 1 ] && Mainline=mainline/
+[ ! -e nginx-$ngxver-1.el7.ngx.src.rpm ] && curl -LO --retry 3 "http://nginx.org/packages/${Mainline}centos/7/SRPMS/nginx-${ngxver}-1.el7.ngx.src.rpm"
+rpm -ih --define "_topdir $bdir" "nginx-$ngxver-1.el7.ngx.src.rpm"
+
+
 # Build BoringSSL
-git clone https://boringssl.googlesource.com/boringssl "$bdir/boringssl"
-cd "$bdir/boringssl"
-mkdir build && cd build
-cmake ../
-make
+if [ -e "${rpath}/boringssl" ]
+then
+	cd "${rpath}/boringssl"
+	git fetch && git pull
+else
+	git clone "https://boringssl.googlesource.com/boringssl" "${rpath}/boringssl"
+fi
 
-
-# Make an .openssl directory for nginx and then symlink BoringSSL's include directory tree
-mkdir -p "$bdir/boringssl/.openssl/lib"
-cd "$bdir/boringssl/.openssl"
-ln -s ../include
-
-
-# Copy the BoringSSL crypto libraries to .openssl/lib so nginx can find them
-cd "$bdir/boringssl"
-cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
-
-
-# Download "ngx_headers_more" module for finer-grained control over server headers
-git clone https://github.com/openresty/headers-more-nginx-module.git "$bdir/ngx_headers_more"
-
-
-# Download and prepare nginx
-cd "$bdir"
-wget --https-only "https://nginx.org/download/nginx-$ngxver.tar.gz"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver.patch"
-if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 2; fi
-cd "$bdir/nginx-$ngxver"
+cp -r "${rpath}/boringssl" "$bdir/SOURCES"
+mkdir -p "${bdir}/SOURCES/boringssl/build" && cd "${bdir}/SOURCES/boringssl/build"
+cmake ../ && make
+mkdir -p "${bdir}/SOURCES/boringssl/.openssl/lib"
+cd "${bdir}/SOURCES/boringssl/.openssl" && ln -s ../include
+cd "${bdir}/SOURCES/boringssl" && cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
+cp "${rpath}/patches/$ngxver.patch" >> "${bdir}/SOURCES/boring.patch"
 
 
 # Config nginx based on the flags passed to the script, if any
-EXTRACONFIG=""
-WITHROOT=""
-if [ $PASSENGER -eq 1 ]
+if [ $PASSENGER ]
 then
-	echo "" && echo "Phusion Passenger module enabled."
-	sudo gem install rails
-	sudo gem install passenger
-	EXTRACONFIG="$EXTRACONFIG --add-module=$(passenger-config --root)/src/nginx_module"
-	WITHROOT="sudo " # Passenger needs root to read/write to /var/lib/gems
+    [ ! $(gem list rails | grep rails) ] && sudo gem install rails -v 4.2.7
+    [ ! $(gem list passenger | grep passenger) ] && sudo gem install passenger
 fi
 
 
-# Run the config with default options and append any additional options specified by the above section
-$WITHROOT./configure --prefix=/usr/share/nginx \
-	--sbin-path=/usr/sbin/nginx \
-	--conf-path=/etc/nginx/nginx.conf \
-	--error-log-path=/var/log/nginx/error.log \
-	--http-log-path=/var/log/nginx/access.log \
-        --pid-path=/run/nginx.pid \
-        --lock-path=/run/lock/subsys/nginx \
-        --user=www-data \
-        --group=www-data \
-        --with-threads \
-        --with-file-aio \
-        --with-http_ssl_module \
-        --with-http_v2_module \
-        --with-http_realip_module \
-        --with-http_gunzip_module \
-        --with-http_gzip_static_module \
-        --with-http_slice_module \
-        --with-http_stub_status_module \
-        --without-select_module \
-        --without-poll_module \
-        --without-mail_pop3_module \
-        --without-mail_imap_module \
-        --without-mail_smtp_module \
-	--add-module="$bdir/ngx_headers_more" \
-	--with-openssl="$bdir/boringssl" \
-	--with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
-	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
-	$EXTRACONFIG
+# Setup RPM Spec
+patch "${bdir}/SPECS/nginx.spec" "${rpath}/patches/$ngxver-centos-spec.patch"
+[ $PASSENGER ] && EXTRACONFIG="$EXTRACONFIG --add-module=$(passenger-config --root)/src/nginx_module"
+sed -i "1 i\%define EXTRACONFIG ${EXTRACONFIG-;}" "${bdir}/SPECS/nginx.spec"
+sed -i "1 i\%define dist .el%{rhel}" "${bdir}/SPECS/nginx.spec"
 
 
-# Fix "Error 127" during build
-touch "$bdir/boringssl/.openssl/include/openssl/ssl.h"
+# Build Nginx RPM
+if [ $PASSENGER ]
+then
+    sudo -i -u root bash -c "PATH=/usr/local/bin:$PATH rpmbuild -bb --define '_topdir $bdir' ${bdir}/SPECS/nginx.spec"
+else
+    rpmbuild -bb --define "_topdir $bdir" "${bdir}/SPECS/nginx.spec"
+fi
+sudo chown -R $USER "$bdir"
 
 
-# Fix some other build errors caused by nginx expecting OpenSSL
-patch -p1 < "../$ngxver.patch"
-
-
-# Build nginx
-make # Fortunately we can get away without root here, even for Passenger installs
-sudo make install
-
-
-# Add systemd service
-cd "$bdir/"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/nginx.service"
-sudo cp -f -v nginx.service "/lib/systemd/system/nginx.service"
-
-# Enable & start service
-sudo systemctl enable nginx.service
-sudo systemctl start nginx.service
-
-# Finish script
+# Install
+sudo rpm -iv --replacepkgs "${bdir}/RPMS/${HOSTTYPE}/nginx-*.rpm"
+sudo systemctl daemon-reload
 echo ""
-sudo /usr/sbin/nginx -V
+nginx -V
 echo ""
-sudo ldd /usr/sbin/nginx
-
-# If you previously installed nginx via yum and get errors when trying to boot this compiled version, you might need to remove /etc/nginx and then try the buildscript again (or just the 'make install' part)
+ldd /usr/sbin/nginx
+echo ""
+echo "Install complete!"
+echo "You can start/enable nginx with systemctl command:"
+echo ""
+echo "    sudo systemctl start nginx"
+echo "    sudo systemctl enable nginx"
+echo ""

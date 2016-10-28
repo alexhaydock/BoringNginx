@@ -129,7 +129,7 @@ touch "$bdir/boringssl/.openssl/include/openssl/ssl.h"
 
 
 # Fix some other build errors caused by nginx expecting OpenSSL
-patch -p1 < "../$ngxver.patch"
+patch -p1 < "../patches/$ngxver.patch"
 
 
 # Build nginx

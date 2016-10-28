@@ -1,0 +1,79 @@
+--- nginx.spec.orig     2016-10-28 22:14:57.312411280 +0100
++++ nginx.spec  2016-10-28 22:36:43.741467956 +0100
+@@ -12,8 +12,6 @@
+ Requires(pre): shadow-utils
+ Requires: initscripts >= 8.36
+ Requires(post): chkconfig
+-Requires: openssl
+-BuildRequires: openssl-devel
+ %endif
+
+ %if 0%{?rhel} == 6
+@@ -21,8 +19,6 @@
+ Requires(pre): shadow-utils
+ Requires: initscripts >= 8.36
+ Requires(post): chkconfig
+-Requires: openssl >= 1.0.1
+-BuildRequires: openssl-devel >= 1.0.1
+ %endif
+
+ %if 0%{?rhel} == 7
+@@ -33,7 +29,6 @@
+ Requires: systemd
+ Requires: openssl >= 1.0.1
+ BuildRequires: systemd
+-BuildRequires: openssl-devel >= 1.0.1
+ %endif
+
+ %if 0%{?suse_version} == 1315
+@@ -41,7 +36,6 @@
+ %define nginx_loggroup trusted
+ Requires(pre): shadow
+ Requires: systemd
+-BuildRequires: libopenssl-devel
+ BuildRequires: systemd
+ %endif
+
+@@ -54,7 +48,7 @@
+
+ %define WITH_CC_OPT $(echo %{optflags} $(pcre-config --cflags))
+
+-%define BASE_CONFIGURE_ARGS $(echo "--prefix=%{_sysconfdir}/nginx --sbin-path=%{_sbindir}/nginx --modules-path=%{_libdir}/nginx/modules --conf-path=%{_sysconfdir}/nginx/nginx.conf --error-log-path=%{_localstatedir}/log/nginx/error.log --$
++%define BASE_CONFIGURE_ARGS $(echo "--prefix=%{_sysconfdir}/nginx --sbin-path=%{_sbindir}/nginx --modules-path=%{_libdir}/nginx/modules --conf-path=%{_sysconfdir}/nginx/nginx.conf --error-log-path=%{_localstatedir}/log/nginx/error.log --$
+
+ Summary: High performance web server
+ Name: nginx
+@@ -64,7 +58,7 @@
+ URL: http://nginx.org/
+ Group: %{_group}
+
+-Source0: http://nginx.org/download/%{name}-%{version}.tar.gz
++Source0: https://nginx.org/download/%{name}-%{version}.tar.gz
+ Source1: logrotate
+ Source2: nginx.init.in
+ Source3: nginx.sysconf
+@@ -76,6 +70,7 @@
+ Source10: nginx.suse.logrotate
+ Source11: nginx-debug.service
+ Source12: COPYRIGHT
++Patch0: boring.patch
+
+ License: 2-clause BSD-like license
+
+@@ -95,6 +90,8 @@
+
+ %prep
+ %setup -q
++patch0 -p1
++mv %_sourcedir/boringssl .
+ cp %{SOURCE2} .
+ sed -e 's|%%DEFAULTSTART%%|2 3 4 5|g' -e 's|%%DEFAULTSTOP%%|0 1 6|g' \
+     -e 's|%%PROVIDES%%|nginx|g' < %{SOURCE2} > nginx.init
+@@ -105,6 +102,7 @@
+ ./configure %{BASE_CONFIGURE_ARGS} \
+     --with-cc-opt="%{WITH_CC_OPT}" \
+     --with-debug
++touch boringssl/.openssl/include/openssl/ssl.h || true
+ make %{?_smp_mflags}
+ %{__mv} %{bdir}/objs/nginx \
+     %{bdir}/objs/nginx-debug
