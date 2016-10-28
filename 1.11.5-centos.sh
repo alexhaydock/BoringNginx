@@ -52,7 +52,7 @@ sudo yum -y install cmake gcc gcc-c++ gd-devel GeoIP-devel git golang libxslt-de
 # Prepare nginx source
 mkdir "$bdir" && mkdir -p "$rpath/source" && cd "$rpath/source"
 [ $(($(expr $ngxver : '..\([0-9]*\).*')%2)) -eq 1 ] && Mainline=mainline/
-[ ! -e nginx-$ngxver-1.el7.ngx.src.rpm ] && curl -LO --retry 3 "http://nginx.org/packages/${Mainline}centos/7/SRPMS/nginx-${ngxver}-1.el7.ngx.src.rpm"
+[ ! -e nginx-$ngxver-1.el7.ngx.src.rpm ] && curl -LO --retry 3 "https://nginx.org/packages/${Mainline}centos/7/SRPMS/nginx-${ngxver}-1.el7.ngx.src.rpm"
 rpm -ih --define "_topdir $bdir" "nginx-$ngxver-1.el7.ngx.src.rpm"
 
 
@@ -71,31 +71,31 @@ cmake ../ && make
 mkdir -p "${bdir}/SOURCES/boringssl/.openssl/lib"
 cd "${bdir}/SOURCES/boringssl/.openssl" && ln -s ../include
 cd "${bdir}/SOURCES/boringssl" && cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
-cp "${rpath}/patches/$ngxver.patch" >> "${bdir}/SOURCES/boring.patch"
+cp "${rpath}/patches/$ngxver.patch" "${bdir}/SOURCES/boring.patch"
 
 
 # Config nginx based on the flags passed to the script, if any
-if [ $PASSENGER ]
-then
-    [ ! $(gem list rails | grep rails) ] && sudo gem install rails -v 4.2.7
-    [ ! $(gem list passenger | grep passenger) ] && sudo gem install passenger
-fi
+#if [ $PASSENGER ]
+#then
+#    [ ! $(gem list rails | grep rails) ] && sudo gem install rails -v 4.2.7
+#    [ ! $(gem list passenger | grep passenger) ] && sudo gem install passenger
+#fi
 
 
 # Setup RPM Spec
 patch "${bdir}/SPECS/nginx.spec" "${rpath}/patches/$ngxver-centos-spec.patch"
-[ $PASSENGER ] && EXTRACONFIG="$EXTRACONFIG --add-module=$(passenger-config --root)/src/nginx_module"
+#[ $PASSENGER ] && EXTRACONFIG="$EXTRACONFIG --add-module=$(passenger-config --root)/src/nginx_module"
 sed -i "1 i\%define EXTRACONFIG ${EXTRACONFIG-;}" "${bdir}/SPECS/nginx.spec"
 sed -i "1 i\%define dist .el%{rhel}" "${bdir}/SPECS/nginx.spec"
 
 
 # Build Nginx RPM
-if [ $PASSENGER ]
-then
-    sudo -i -u root bash -c "PATH=/usr/local/bin:$PATH rpmbuild -bb --define '_topdir $bdir' ${bdir}/SPECS/nginx.spec"
-else
+#if [ $PASSENGER ]
+#then
+#    sudo -i -u root bash -c "PATH=/usr/local/bin:$PATH rpmbuild -bb --define '_topdir $bdir' ${bdir}/SPECS/nginx.spec"
+#else
     rpmbuild -bb --define "_topdir $bdir" "${bdir}/SPECS/nginx.spec"
-fi
+#fi
 sudo chown -R $USER "$bdir"
 
 
@@ -106,10 +106,5 @@ echo ""
 nginx -V
 echo ""
 ldd /usr/sbin/nginx
-echo ""
-echo "Install complete!"
-echo "You can start/enable nginx with systemctl command:"
-echo ""
-echo "    sudo systemctl start nginx"
-echo "    sudo systemctl enable nginx"
-echo ""
+echo "\nInstall complete!\nYou can start/enable nginx with systemctl:\n"
+echo "    sudo systemctl start nginx\n    sudo systemctl enable nginx\n"
