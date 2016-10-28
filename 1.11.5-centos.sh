@@ -4,10 +4,10 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 
 
 ## Note to self. (For use when generating patches).
-# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
+# diff -ur nginx-1.11.5/ nginx-1.11.5-patched/ > ../boring.patch
 
 
-ngxver="1.10.0" # Target nginx version
+ngxver="1.11.5" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
@@ -44,8 +44,7 @@ if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting." && exi
 # Install deps & remove old nginx if we installed it with apt
 sudo systemctl stop nginx
 sudo systemctl disable nginx
-sudo apt remove nginx nginx-common nginx-full nginx-light
-sudo apt install build-essential cmake git golang libpcre3-dev wget zlib1g-dev libcurl4-openssl-dev
+sudo yum -y install cmake gcc gcc-c++ gd-devel GeoIP-devel git golang libxslt-devel patch pcre-devel perl-devel perl-ExtUtils-Embed rpm-build wget
 
 
 # Build BoringSSL
@@ -104,7 +103,6 @@ $WITHROOT./configure --prefix=/usr/share/nginx \
         --group=www-data \
         --with-threads \
         --with-file-aio \
-        --with-ipv6 \
         --with-http_ssl_module \
         --with-http_v2_module \
         --with-http_realip_module \
@@ -152,4 +150,4 @@ sudo /usr/sbin/nginx -V
 echo ""
 sudo ldd /usr/sbin/nginx
 
-# If you previously installed nginx via apt and get errors when trying to boot this compiled version, you might need to remove /etc/nginx and then try the buildscript again (or just the 'make install' part)
+# If you previously installed nginx via yum and get errors when trying to boot this compiled version, you might need to remove /etc/nginx and then try the buildscript again (or just the 'make install' part)
