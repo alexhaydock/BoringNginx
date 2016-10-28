@@ -44,8 +44,11 @@ if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting." && exi
 
 
 # Install deps
-sudo systemctl stop nginx
-sudo systemctl disable nginx
+if [ -f "/lib/systemd/system/nginx.service" ]
+then
+	sudo systemctl stop nginx
+	sudo systemctl disable nginx
+fi
 sudo yum -y install cmake gcc gcc-c++ gd-devel GeoIP-devel git golang libxslt-devel patch pcre-devel perl-devel perl-ExtUtils-Embed rpm-build wget
 
 
@@ -106,5 +109,9 @@ echo ""
 nginx -V
 echo ""
 ldd /usr/sbin/nginx
-echo "\nInstall complete!\nYou can start/enable nginx with systemctl:\n"
-echo "    sudo systemctl start nginx\n    sudo systemctl enable nginx\n"
+echo ""
+echo "Install complete!"
+echo "You can start/enable nginx using systemctl:"
+echo "    sudo systemctl start nginx"
+echo "    sudo systemctl enable nginx"
+echo ""
