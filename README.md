@@ -22,6 +22,12 @@ If you're running this on a blank machine or inside a Docker container or someth
 
 With that out of the way, I hope you find some use for this script or these patches. Enjoy! :)
 
+### Quick Deployment (Docker)
+To make the process of deployment, migration and testing easier, I have created a Docker build for this package. You can find the Dockerfiles in [this repository here](https://github.com/ajhaydock/BoringNginx-Docker) if you want to roll your own, or you can deploy [directly from Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) using a command like this follows:
+```
+docker run --name nginx-p 80:80 -d ajhaydock/boringnginx
+```
+
 ### Enabling PHP
 To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
 
