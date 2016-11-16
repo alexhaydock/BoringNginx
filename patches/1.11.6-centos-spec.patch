@@ -1,0 +1,97 @@
+--- nginx.spec.orig	2016-11-15 16:51:58.000000000 +0000
++++ nginx.spec	2016-11-16 23:49:17.760374525 +0000
+@@ -12,8 +12,6 @@
+ Requires(pre): shadow-utils
+ Requires: initscripts >= 8.36
+ Requires(post): chkconfig
+-Requires: openssl
+-BuildRequires: openssl-devel
+ %endif
+ 
+ %if 0%{?rhel} == 6
+@@ -21,8 +19,6 @@
+ Requires(pre): shadow-utils
+ Requires: initscripts >= 8.36
+ Requires(post): chkconfig
+-Requires: openssl >= 1.0.1
+-BuildRequires: openssl-devel >= 1.0.1
+ %endif
+ 
+ %if 0%{?rhel} == 7
+@@ -33,7 +29,6 @@
+ Requires: systemd
+ Requires: openssl >= 1.0.1
+ BuildRequires: systemd
+-BuildRequires: openssl-devel >= 1.0.1
+ %endif
+ 
+ %if 0%{?suse_version} == 1315
+@@ -41,7 +36,6 @@
+ %define nginx_loggroup trusted
+ Requires(pre): shadow
+ Requires: systemd
+-BuildRequires: libopenssl-devel
+ BuildRequires: systemd
+ %endif
+ 
+@@ -54,7 +48,9 @@
+ 
+ %define WITH_CC_OPT $(echo %{optflags} $(pcre-config --cflags))
+ 
+-%define BASE_CONFIGURE_ARGS $(echo "--prefix=%{_sysconfdir}/nginx --sbin-path=%{_sbindir}/nginx --modules-path=%{_libdir}/nginx/modules --conf-path=%{_sysconfdir}/nginx/nginx.conf --error-log-path=%{_localstatedir}/log/nginx/error.log --http-log-path=%{_localstatedir}/log/nginx/access.log --pid-path=%{_localstatedir}/run/nginx.pid --lock-path=%{_localstatedir}/run/nginx.lock --http-client-body-temp-path=%{_localstatedir}/cache/nginx/client_temp --http-proxy-temp-path=%{_localstatedir}/cache/nginx/proxy_temp --http-fastcgi-temp-path=%{_localstatedir}/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=%{_localstatedir}/cache/nginx/uwsgi_temp --http-scgi-temp-path=%{_localstatedir}/cache/nginx/scgi_temp --user=%{nginx_user} --group=%{nginx_group} --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module --with-mail --with-mail_ssl_module --with-stream --with-stream_realip_module --with-stream_ssl_module --with-stream_ssl_preread_module")
++%define BASE_CONFIGURE_ARGS $(echo "--prefix=%{_sysconfdir}/nginx --sbin-path=%{_sbindir}/nginx --modules-path=%{_libdir}/nginx/modules --conf-path=%{_sysconfdir}/nginx/nginx.conf --error-log-path=%{_localstatedir}/log/nginx/error.log --http-log-path=%{_localstatedir}/log/nginx/access.log --pid-path=%{_localstatedir}/run/nginx.pid --lock-path=%{_localstatedir}/run/nginx.lock --http-client-body-temp-path=%{_localstatedir}/cache/nginx/client_temp --http-proxy-temp-path=%{_localstatedir}/cache/nginx/proxy_temp --http-fastcgi-temp-path=%{_localstatedir}/cache/nginx/fastcgi_temp --http-uwsgi-temp-path=%{_localstatedir}/cache/nginx/uwsgi_temp --http-scgi-temp-path=%{_localstatedir}/cache/nginx/scgi_temp --user=%{nginx_user} --group=%{nginx_group} --with-compat --with-file-aio --with-threads --with-http_addition_module --with-http_auth_request_module --with-http_dav_module --with-http_flv_module --with-http_gunzip_module --with-http_gzip_static_module --with-http_mp4_module --with-http_random_index_module --with-http_realip_module --with-http_secure_link_module --with-http_slice_module --with-http_ssl_module --with-http_stub_status_module --with-http_sub_module --with-http_v2_module")
++%define BORINGNGINX_CONFIGURE_ARGS $(echo "--without-select_module --without-poll_module --without-mail_pop3_module --without-mail_imap_module --without-mail_smtp_module --with-openssl=boringssl")
++%define BORINGNGINX_LD_OPT $(echo "-Wl,-z,now")
+ 
+ Summary: High performance web server
+ Name: nginx
+@@ -64,7 +60,7 @@
+ URL: http://nginx.org/
+ Group: %{_group}
+ 
+-Source0: http://nginx.org/download/%{name}-%{version}.tar.gz
++Source0: https://nginx.org/download/%{name}-%{version}.tar.gz
+ Source1: logrotate
+ Source2: nginx.init.in
+ Source3: nginx.sysconf
+@@ -76,6 +72,7 @@
+ Source10: nginx.suse.logrotate
+ Source11: nginx-debug.service
+ Source12: COPYRIGHT
++Patch0: boring.patch
+ 
+ License: 2-clause BSD-like license
+ 
+@@ -95,6 +92,8 @@
+ 
+ %prep
+ %setup -q
+++%patch0 -p1
+++mv %_sourcedir/boringssl .
+ cp %{SOURCE2} .
+ sed -e 's|%%DEFAULTSTART%%|2 3 4 5|g' -e 's|%%DEFAULTSTOP%%|0 1 6|g' \
+     -e 's|%%PROVIDES%%|nginx|g' < %{SOURCE2} > nginx.init
+@@ -102,14 +101,18 @@
+     -e 's|%%PROVIDES%%|nginx-debug|g' < %{SOURCE2} > nginx-debug.init
+ 
+ %build
+-./configure %{BASE_CONFIGURE_ARGS} \
+-    --with-cc-opt="%{WITH_CC_OPT}" \
+-    --with-debug
++./configure %{BASE_CONFIGURE_ARGS} %{BORINGNGINX_CONFIGURE_ARGS} \
++     --with-cc-opt="%{WITH_CC_OPT}" \
++    --with-ld-opt="%{BORINGNGINX_LD_OPT}" \
++     --with-debug
++touch boringssl/.openssl/include/openssl/ssl.h || true
+ make %{?_smp_mflags}
+ %{__mv} %{bdir}/objs/nginx \
+     %{bdir}/objs/nginx-debug
+-./configure %{BASE_CONFIGURE_ARGS} \
+-    --with-cc-opt="%{WITH_CC_OPT}"
++./configure %{BASE_CONFIGURE_ARGS} %{BORINGNGINX_CONFIGURE_ARGS} \
++    --with-cc-opt="%{WITH_CC_OPT}" \
++    --with-ld-opt="%{BORINGNGINX_LD_OPT}"
++touch boringssl/.openssl/include/openssl/ssl.h || true
+ make %{?_smp_mflags}
+ 
+ %install

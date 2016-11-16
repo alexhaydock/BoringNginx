@@ -74,7 +74,7 @@ git clone https://github.com/openresty/headers-more-nginx-module.git "$bdir/ngx_
 # Download and prepare nginx
 cd "$bdir"
 wget --https-only "https://nginx.org/download/nginx-$ngxver.tar.gz"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/$ngxver.patch"
+wget "https://github.com/ajhaydock/BoringNginx/raw/master/patches/$ngxver.patch"
 if [ -f "nginx-$ngxver.tar.gz" ]; then tar zxvf "nginx-$ngxver.tar.gz"; else echo -e "\nFailed to download nginx $ngxver" && exit 2; fi
 cd "$bdir/nginx-$ngxver"
 

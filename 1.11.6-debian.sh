@@ -4,10 +4,10 @@ if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as 
 
 
 ## Note to self. (For use when generating patches).
-# diff -ur nginx-1.10.0/ nginx-1.10.0-patched/ > ../boring.patch
+# diff -ur nginx-1.11.6/ nginx-1.11.6-patched/ > ../boring.patch
 
 
-ngxver="1.10.0" # Target nginx version
+ngxver="1.11.6" # Target nginx version
 bdir="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
@@ -104,7 +104,6 @@ $WITHROOT./configure --prefix=/usr/share/nginx \
         --group=www-data \
         --with-threads \
         --with-file-aio \
-        --with-ipv6 \
         --with-http_ssl_module \
         --with-http_v2_module \
         --with-http_realip_module \
