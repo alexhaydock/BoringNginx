@@ -14,6 +14,7 @@ This allows you to use some state-of-the-art crypto features ~~not yet available
 | Nginx 1.11.3 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
 | Nginx 1.11.4 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
 | Nginx 1.11.5 | Debian Jessie/Stretch (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
+| Nginx 1.11.6 | Debian Jessie/Stretch (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
 
 ### WARNING!
 I don't recommend running this script on any production machines without going through and testing it first. It's designed to go through and remove any existing `nginx` installation, then compiles nginx and assumes you then want it installed too. It does everything in `/tmp`, which might work for some people, but you might want to change this for other reasons. I'm also not sure how it might interact with other complex setups that people may be running.
