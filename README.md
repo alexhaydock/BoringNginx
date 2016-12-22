@@ -24,10 +24,28 @@ If you're running this on a blank machine or inside a Docker container or someth
 With that out of the way, I hope you find some use for this script or these patches. Enjoy! :)
 
 ### Quick Deployment (Docker)
-To make the process of deployment, migration and testing easier, I have created a Docker build for this package. You can find the Dockerfiles in [this repository here](https://github.com/ajhaydock/BoringNginx-Docker) if you want to roll your own, or you can deploy [directly from Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) using a command like this follows:
+This is currently a work in progress, but seems to be working well so far. I have also deployed this [on Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) (linked to this GitHub repo) to speed up deployment even further.
+
+The Docker Hub images allow for instant setup of a working instance under my custom nginx+BoringSSL build. You can deploy a test version of this instance (currently built on top of Docker's official `debian:jessie` image:
 ```
 docker run --name nginx-p 80:80 -d ajhaydock/boringnginx
 ```
+
+Alternatively, you can clone this repo and build the Docker container directly.
+
+Enter the directory containing the Dockerfile you want to build an image for, and build it with something like:
+```
+docker build -t boringnginx .
+```
+
+Running a manually-built container is similar to the above:
+```
+docker run --name nginx -p 80:80 -d boringnginx
+```
+
+You can also automate the run command with a systemd service or something similar. This is probably how you will want to do it if you're customising this and using it to deploy a site in production. Creating a systemd service that calls the `docker run` command means you will end up with a webserver that basically operates as a normal installation of nginx would operate - but containerized as an all-in-one distribution.
+
+Obviously, this built container will not contain any of your site data, your `nginx.conf,` or your SSL keys. You probably want to look at the [Docker Volumes](https://docs.docker.com/engine/tutorials/dockervolumes/) documentation for information on giving the container access to these in a location on your host machine. This will probably be done by adding a few `-v` flags to the `docker run` examples above.
 
 ### Enabling PHP
 To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
