@@ -11,6 +11,10 @@ NGXVER="1.11.3" # Target nginx version
 BDIR="/tmp/boringnginx-$RANDOM" # Set build directory
 
 
+# Find out what directory we're running in
+SCRIPTDIR=$( cd $(dirname $0) ; pwd -P )
+
+
 # Handle arguments passed to the script. Currently only accepts the flag to
 # include passenger at compile time,but I might add a help section or more options soon.
 PASSENGER=0
@@ -176,13 +180,13 @@ sudo make install
 
 
 # Add systemd service
-cd "$BDIR/"
-wget "https://github.com/ajhaydock/BoringNginx/raw/master/nginx.service"
-sudo cp -f -v nginx.service "/lib/systemd/system/nginx.service"
+sudo cp -f -v "$SCRIPTDIR/nginx.service" "/lib/systemd/system/nginx.service"
+
 
 # Enable & start service
 sudo systemctl enable nginx.service
 sudo systemctl start nginx.service
+
 
 # Finish script
 echo ""
