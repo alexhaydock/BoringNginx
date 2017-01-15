@@ -6,16 +6,16 @@ Build script to build current stable Nginx with Google's BoringSSL instead of th
 
 This allows you to use some state-of-the-art crypto features ~~not yet available in the stable branch of OpenSSL~~ (these features [have now entered stable, as of Sep 2016](https://www.openssl.org/news/newslog.html)), like [ChaCha20-Poly1305](https://boringssl.googlesource.com/boringssl/+/de0b2026841c34193cacf5c97646b38439e13200) as a cipher/MAC combo, and [X25519](https://boringssl.googlesource.com/boringssl/+/4fb0dc4b031df7c9ac9d91fc34536e4e08b35d6a) (aka Curve25519) as the ECDHE curve provider if you want to get away from using [unsafe NIST curves](https://safecurves.cr.yp.to/) (though you probably want to check the X25519 [browser support matrix](https://www.chromestatus.com/feature/5682529109540864) before trying that).
 
-| Version      | Tested Working On                      |                               |
-|--------------|----------------------------------------|-------------------------------|
-| Nginx 1.10.0 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
-| Nginx 1.11.0 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
-| Nginx 1.11.1 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
-| Nginx 1.11.3 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
-| Nginx 1.11.4 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
-| Nginx 1.11.5 | Debian Jessie/Stretch (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
-| Nginx 1.11.6 | Debian Jessie/Stretch (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
-| Nginx 1.11.8 | Debian Jessie/Stretch (with Grsec/PaX) |                               |
+|    Version   |        Tested Working On        |                               |
+|:------------:|:-------------------------------:|:-----------------------------:|
+| Nginx 1.10.0 |  Debian Jessie (with Grsec/PaX) |                               |
+| Nginx 1.11.0 |  Debian Jessie (with Grsec/PaX) |                               |
+| Nginx 1.11.1 |  Debian Jessie (with Grsec/PaX) |                               |
+| Nginx 1.11.3 |  Debian Jessie (with Grsec/PaX) |                               |
+| Nginx 1.11.4 |  Debian Jessie (with Grsec/PaX) |                               |
+| Nginx 1.11.5 |  Debian Jessie (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
+| Nginx 1.11.6 |  Debian Jessie (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
+| Nginx 1.11.8 | Debian Stretch (with Grsec/PaX) |                               |
 
 ### WARNING!
 I don't recommend running this script on any production machines without going through and testing it first. It's designed to go through and remove any existing `nginx` installation, then compiles nginx and assumes you then want it installed too. It does everything in `/tmp`, which might work for some people, but you might want to change this for other reasons. I'm also not sure how it might interact with other complex setups that people may be running.
@@ -29,7 +29,7 @@ This is currently a work in progress, but seems to be working well so far. I hav
 
 The Docker Hub images allow for instant setup of a working instance under my custom nginx+BoringSSL build. You can deploy a test version of this instance (currently built on top of Docker's official `debian:jessie` image:
 ```
-docker run --name nginx-p 80:80 -d ajhaydock/boringnginx
+docker run --cap-drop=all --name nginx -d -p 80:8080 ajhaydock/boringnginx
 ```
 
 Alternatively, you can clone this repo and build the Docker container directly.
@@ -41,7 +41,7 @@ docker build -t boringnginx .
 
 Running a manually-built container is similar to the above:
 ```
-docker run --name nginx -p 80:80 -d boringnginx
+docker run --cap-drop=all --name nginx -d -p 80:8080 boringnginx
 ```
 
 You can also automate the run command with a systemd service or something similar. This is probably how you will want to do it if you're customising this and using it to deploy a site in production. Creating a systemd service that calls the `docker run` command means you will end up with a webserver that basically operates as a normal installation of nginx would operate - but containerized as an all-in-one distribution.

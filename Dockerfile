@@ -1,17 +1,21 @@
-# Automated container builds for my BoringNginx (nginx + BoringSSL) custom build.
-
-# To run this container from Docker Hub, try a command like:
+# To deploy this container directly from Docker Hub, use:
 #
-#     docker run --name nginx -d -p 80:80 ajhaydock/boringnginx
+#        docker run --cap-drop=all --name nginx -d -p 80:8080 ajhaydock/boringnginx
+#
+# To build and run this container locally, try a command like:
+#
+#        docker build -t boringnginx .
+#        docker run --cap-drop=all --name nginx -d -p 80:8080 boringnginx
 #
 
 FROM debian:stretch
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
 ENV NGXVERSION 1.11.8
-ENV HOME /root
 
-WORKDIR $HOME
+# Build as root
+USER root
+WORKDIR /root
 
 # Install deps
 RUN apt-get clean && apt-get update && apt-get upgrade -y && apt-get install -y \
@@ -102,9 +106,14 @@ RUN cd "$HOME/nginx-$NGXVERSION/" \
   && make \
   && make install
 
-# Make sure the permissions are set correctly on our pidfile so that we can run the webserver as non-root.
-RUN touch /var/run/nginx.pid \
-  && chown -R www-data:www-data /var/run/nginx.pid
+# Make sure the permissions are set correctly on our webroot, logdir and pidfile so that we can run the webserver as non-root.
+RUN chown -R www-data:www-data /usr/share/nginx \
+  && chown -R www-data:www-data /var/log/nginx \
+  && touch /run/nginx.pid \
+  && chown -R www-data:www-data /run/nginx.pid
+
+# Configure nginx to listen on 8080 instead of 80 (we can't bind to <1024 as non-root)
+RUN perl -pi -e 's,80;,8080;,' /etc/nginx/nginx.conf
 
 # Forward request and error logs to Docker log collector
 # (We can do this with access logs too, but I don't intend to expose
@@ -113,6 +122,8 @@ RUN touch /var/run/nginx.pid \
 RUN ln -sf /dev/stderr /var/log/nginx/error.log
 
 # Command to launch when container is started
+WORKDIR /usr/share/nginx
+
 USER www-data
-#CMD ["bash"]
+##CMD ["bash"]
 CMD ["nginx", "-g", "daemon off;"]
