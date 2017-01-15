@@ -5,16 +5,16 @@
 #     docker run --name nginx -d -p 80:80 ajhaydock/boringnginx
 #
 
-FROM debian:jessie
+FROM debian:stretch
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
-ENV NGXVERSION 1.11.6
+ENV NGXVERSION 1.11.8
 ENV HOME /root
 
 WORKDIR $HOME
 
 # Install deps
-RUN apt-get update && apt-get install -y \
+RUN apt-get clean && apt-get update && apt-get upgrade -y && apt-get install -y \
   build-essential \
   ca-certificates \
   cmake \
@@ -50,13 +50,13 @@ RUN git clone https://boringssl.googlesource.com/boringssl "$HOME/boringssl" \
 COPY sources/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
 COPY patches/$NGXVERSION.patch boring.patch
 
-# Import nginx team signing keys
+# Import nginx team signing keys to verify the source code tarball
 RUN wget --https-only "https://nginx.org/keys/aalexeev.key" && gpg --import "aalexeev.key" \
-	&& wget --https-only "https://nginx.org/keys/is.key" && gpg --import "is.key" \
-	&& wget --https-only "https://nginx.org/keys/mdounin.key" && gpg --import "mdounin.key" \
-	&& wget --https-only "https://nginx.org/keys/maxim.key" && gpg --import "maxim.key" \
-	&& wget --https-only "https://nginx.org/keys/sb.key" && gpg --import "sb.key" \
-	&& wget --https-only "https://nginx.org/keys/nginx_signing.key" && gpg --import "nginx_signing.key"
+  && wget --https-only "https://nginx.org/keys/is.key" && gpg --import "is.key" \
+  && wget --https-only "https://nginx.org/keys/mdounin.key" && gpg --import "mdounin.key" \
+  && wget --https-only "https://nginx.org/keys/maxim.key" && gpg --import "maxim.key" \
+  && wget --https-only "https://nginx.org/keys/sb.key" && gpg --import "sb.key" \
+  && wget --https-only "https://nginx.org/keys/nginx_signing.key" && gpg --import "nginx_signing.key"
 
 # Verify this source has been signed with a valid nginx team key
 RUN wget --https-only "https://nginx.org/download/nginx-$NGXVERSION.tar.gz.asc" \
@@ -102,4 +102,17 @@ RUN cd "$HOME/nginx-$NGXVERSION/" \
   && make \
   && make install
 
+# Make sure the permissions are set correctly on our pidfile so that we can run the webserver as non-root.
+RUN touch /var/run/nginx.pid \
+  && chown -R www-data:www-data /var/run/nginx.pid
+
+# Forward request and error logs to Docker log collector
+# (We can do this with access logs too, but I don't intend to expose
+# this container directly to the internet and will frontrun it with
+# a seperate SSL terminator instead, running a custom nginx build)
+RUN ln -sf /dev/stderr /var/log/nginx/error.log
+
+# Command to launch when container is started
+USER www-data
+#CMD ["bash"]
 CMD ["nginx", "-g", "daemon off;"]
