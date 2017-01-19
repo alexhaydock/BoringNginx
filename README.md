@@ -49,14 +49,15 @@ You can also automate the run command with a systemd service or something simila
 Obviously, this built container will not contain any of your site data, your `nginx.conf,` or your SSL keys. You probably want to look at the [Docker Volumes](https://docs.docker.com/engine/tutorials/dockervolumes/) documentation for information on giving the container access to these in a location on your host machine. This will probably be done by adding a few `-v` flags to the `docker run` examples above.
 
 ### Enabling PHP
-To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
+To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package (`php-fpm` on Fedora) and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
 
 To enable PHP, I add the following to my `nginx.conf` server block. The `try_files` directive ensures that Nginx does not forward bad requests to the PHP processor, but you may need to tweak this for your specific web application:
 ```nginx
 	location ~ \.php$ {
 		try_files $uri =404;
 		fastcgi_split_path_info ^(.+\.php)(/.+)$;
-		fastcgi_pass unix:/var/run/php5-fpm.sock;
+		fastcgi_pass unix:/var/run/php5-fpm.sock; # Debian-based
+#		fastcgi_pass unix:/run/php-fpm/www.sock; # Fedora-based
 		fastcgi_index index.php;
 		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 		include fastcgi_params;
