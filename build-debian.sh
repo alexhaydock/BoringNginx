@@ -2,28 +2,37 @@
 set -u
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
+LATESTNGINX="1.11.9" # Set current nginx version here
 
-## Note to self. (For use when generating patches).
-# diff -ur nginx-1.11.6/ nginx-1.11.6-patched/ > ../boring.patch
+SCRIPTDIR=$( cd $(dirname $0) ; pwd -P ) # Find out what directory we're running in
+BDIR="/tmp/boringnginx-$RANDOM" # Set  target build directory
 
+# Work out what version of nginx to build
+if [ -n "$1" ]; then
+	NGXVER="$1"
+	# Test that we actually have the patch for whatever version the user has asked
+	# us to build.
+	if [ ! -f "$SCRIPTDIR/patches/$NGXVER.patch" ]; then
+		echo "Unsupported version: $NGXVER"
+		echo "Exiting."
+		exit 5
+	fi
+else
+	NGXVER="$LATESTNGINX" # Default nginx version
+	echo "No argument given. Building default Nginx version."
+fi
 
-NGXVER="1.11.6" # Target nginx version
-BDIR="/tmp/boringnginx-$RANDOM" # Set build directory
-
-
-# Find out what directory we're running in
-SCRIPTDIR=$( cd $(dirname $0) ; pwd -P )
+exit 3
 
 # Handle arguments passed to the script. Currently only accepts the flag to
-# include passenger at compile time,but I might add a help section or more options soon.
-PASSENGER=0
-while [ "$#" -gt 0 ]; do
-	case $1 in
-		--passenger|-passenger|passenger) PASSENGER="1"; shift 1;;
-		*) echo "Invalid argument: $1" && exit 10;;
-	esac
-done
-
+# include passenger at compile time, but I might add a help section or more options soon.
+##PASSENGER=0
+##while [ "$#" -gt 0 ]; do
+##	case $1 in
+##		--passenger|-passenger|passenger) PASSENGER="1"; shift 1;;
+##		*) echo "Invalid argument: $1" && exit 10;;
+##	esac
+##done
 
 # Prompt our user before we start removing stuff
 CONFIRMED=0
@@ -43,13 +52,11 @@ do
 done
 if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting." && exit 1; fi
 
-
 # Install deps & remove old nginx if we installed it with apt
 sudo systemctl stop nginx
 sudo systemctl disable nginx
 sudo apt remove nginx nginx-common nginx-full nginx-light
 sudo apt install build-essential cmake git gnupg golang libpcre3-dev wget zlib1g-dev libcurl4-openssl-dev
-
 
 # Build BoringSSL
 git clone https://boringssl.googlesource.com/boringssl "$BDIR/boringssl"
@@ -58,31 +65,20 @@ mkdir build && cd build
 cmake ../
 make
 
-
 # Make an .openssl directory for nginx and then symlink BoringSSL's include directory tree
 mkdir -p "$BDIR/boringssl/.openssl/lib"
 cd "$BDIR/boringssl/.openssl"
 ln -s ../include
 
-
 # Copy the BoringSSL crypto libraries to .openssl/lib so nginx can find them
 cd "$BDIR/boringssl"
 cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
 
-
 # Download "ngx_headers_more" module for finer-grained control over server headers
 git clone https://github.com/openresty/headers-more-nginx-module.git "$BDIR/ngx_headers_more"
 
-
-# Import all nginx PGP keys
-cd "$BDIR"
-wget --https-only "https://nginx.org/keys/aalexeev.key" && gpg --import "aalexeev.key"
-wget --https-only "https://nginx.org/keys/is.key" && gpg --import "is.key"
-wget --https-only "https://nginx.org/keys/mdounin.key" && gpg --import "mdounin.key"
-wget --https-only "https://nginx.org/keys/maxim.key" && gpg --import "maxim.key"
-wget --https-only "https://nginx.org/keys/sb.key" && gpg --import "sb.key"
-wget --https-only "https://nginx.org/keys/nginx_signing.key" && gpg --import "nginx_signing.key"
-
+# Import nginx team signing keys to verify the source code tarball
+gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys $NGXSIGKEY
 
 # Verify and extract nginx sources
 cp -f -v "$SCRIPTDIR/sources/nginx-$NGXVER.tar.gz" "$BDIR/nginx-$NGXVER.tar.gz"
@@ -114,24 +110,20 @@ else
 	exit 100
 fi
 
-
 # Since we've got this far, it means verification was successful so we can unpack the sources and start working on them
 tar zxvf "nginx-$NGXVER.tar.gz"
 cd "$BDIR/nginx-$NGXVER"
 
-
 # Config nginx based on the flags passed to the script, if any
 EXTRACONFIG=""
 WITHROOT=""
-if [ $PASSENGER -eq 1 ]
-then
+if [ $PASSENGER -eq 1 ]; then
 	echo "" && echo "Phusion Passenger module enabled."
 	sudo gem install rails
 	sudo gem install passenger
 	EXTRACONFIG="$EXTRACONFIG --add-module=$(passenger-config --root)/src/nginx_module"
 	WITHROOT="sudo " # Passenger needs root to read/write to /var/lib/gems
 fi
-
 
 # Run the config with default options and append any additional options specified by the above section
 $WITHROOT./configure --prefix=/usr/share/nginx \
@@ -163,28 +155,22 @@ $WITHROOT./configure --prefix=/usr/share/nginx \
 	--with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
 	$EXTRACONFIG
 
-
 # Fix "Error 127" during build
 touch "$BDIR/boringssl/.openssl/include/openssl/ssl.h"
 
-
 # Fix some other build errors caused by nginx expecting OpenSSL
 patch -p1 < "../patches/$NGXVER.patch"
-
 
 # Build nginx
 make # Fortunately we can get away without root here, even for Passenger installs
 sudo make install
 
-
 # Add systemd service
 sudo cp -f -v "$SCRIPTDIR/nginx.service" "/lib/systemd/system/nginx.service"
-
 
 # Enable & start service
 sudo systemctl enable nginx.service
 sudo systemctl start nginx.service
-
 
 # Finish script
 echo ""
@@ -192,4 +178,6 @@ sudo /usr/sbin/nginx -V
 echo ""
 sudo ldd /usr/sbin/nginx
 
-# If you previously installed nginx via apt and get errors when trying to boot this compiled version, you might need to remove /etc/nginx and then try the buildscript again (or just the 'make install' part)
+# If you previously installed nginx via apt and get errors when trying to boot
+# this compiled version, you might need to remove /etc/nginx and then try running
+# the buildscript again (or just the 'make install' part)

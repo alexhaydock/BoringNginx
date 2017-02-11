@@ -3,6 +3,16 @@ BoringNginx
 <img align="right" src="https://raw.githubusercontent.com/ajhaydock/BoringNginx/master/nginx.png" alt="Nginx Logo" title="Nginx">
 Build script to build current stable Nginx with Google's BoringSSL instead of the default OpenSSL.
 
+To build latest supported version:
+```
+./build-debian.sh
+```
+
+To build a specific version (if supported):
+```
+./build-debian.sh 1.11.8
+```
+
 ### WARNING!
 I don't recommend running this script on any production machines without going through and testing it first. It's designed to go through and remove any existing `nginx` installation, then compiles nginx and assumes you then want it installed too. It does everything in `/tmp`, which might work for some people, but you might want to change this for other reasons. I'm also not sure how it might interact with other complex setups that people may be running.
 
