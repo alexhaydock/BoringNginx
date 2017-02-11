@@ -11,7 +11,8 @@
 FROM debian:stretch
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
-ENV NGXVERSION 1.11.8
+ENV NGXVERSION 1.11.9
+ENV NGXSIGKEY B0F4253373F8F6F510D42178520A9993A1C052F8
 
 # Build as root
 USER root
@@ -55,12 +56,7 @@ COPY sources/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
 COPY patches/$NGXVERSION.patch boring.patch
 
 # Import nginx team signing keys to verify the source code tarball
-RUN wget --https-only "https://nginx.org/keys/aalexeev.key" && gpg --import "aalexeev.key" \
-  && wget --https-only "https://nginx.org/keys/is.key" && gpg --import "is.key" \
-  && wget --https-only "https://nginx.org/keys/mdounin.key" && gpg --import "mdounin.key" \
-  && wget --https-only "https://nginx.org/keys/maxim.key" && gpg --import "maxim.key" \
-  && wget --https-only "https://nginx.org/keys/sb.key" && gpg --import "sb.key" \
-  && wget --https-only "https://nginx.org/keys/nginx_signing.key" && gpg --import "nginx_signing.key"
+RUN gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys $NGXSIGKEY
 
 # Verify this source has been signed with a valid nginx team key
 RUN wget --https-only "https://nginx.org/download/nginx-$NGXVERSION.tar.gz.asc" \

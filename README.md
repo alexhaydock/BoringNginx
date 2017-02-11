@@ -1,21 +1,7 @@
 BoringNginx
 =========
 <img align="right" src="https://raw.githubusercontent.com/ajhaydock/BoringNginx/master/nginx.png" alt="Nginx Logo" title="Nginx">
-
 Build script to build current stable Nginx with Google's BoringSSL instead of the default OpenSSL.
-
-This allows you to use some state-of-the-art crypto features ~~not yet available in the stable branch of OpenSSL~~ (these features [have now entered stable, as of Sep 2016](https://www.openssl.org/news/newslog.html)), like [ChaCha20-Poly1305](https://boringssl.googlesource.com/boringssl/+/de0b2026841c34193cacf5c97646b38439e13200) as a cipher/MAC combo, and [X25519](https://boringssl.googlesource.com/boringssl/+/4fb0dc4b031df7c9ac9d91fc34536e4e08b35d6a) (aka Curve25519) as the ECDHE curve provider if you want to get away from using [unsafe NIST curves](https://safecurves.cr.yp.to/) (though you probably want to check the X25519 [browser support matrix](https://www.chromestatus.com/feature/5682529109540864) before trying that).
-
-|    Version   |        Tested Working On        |                               |
-|:------------:|:-------------------------------:|:-----------------------------:|
-| Nginx 1.10.0 |  Debian Jessie (with Grsec/PaX) |                               |
-| Nginx 1.11.0 |  Debian Jessie (with Grsec/PaX) |                               |
-| Nginx 1.11.1 |  Debian Jessie (with Grsec/PaX) |                               |
-| Nginx 1.11.3 |  Debian Jessie (with Grsec/PaX) |                               |
-| Nginx 1.11.4 |  Debian Jessie (with Grsec/PaX) |                               |
-| Nginx 1.11.5 |  Debian Jessie (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
-| Nginx 1.11.6 |  Debian Jessie (with Grsec/PaX) | CentOS 7 (Default el7 Kernel) |
-| Nginx 1.11.8 | Debian Stretch (with Grsec/PaX) |                               |
 
 ### WARNING!
 I don't recommend running this script on any production machines without going through and testing it first. It's designed to go through and remove any existing `nginx` installation, then compiles nginx and assumes you then want it installed too. It does everything in `/tmp`, which might work for some people, but you might want to change this for other reasons. I'm also not sure how it might interact with other complex setups that people may be running.
