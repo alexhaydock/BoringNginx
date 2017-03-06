@@ -1,45 +1,72 @@
 # To deploy this container directly from Docker Hub, use:
 #
-#        docker run --cap-drop=all --name nginx -d -p 80:8080 ajhaydock/boringnginx
+#        docker run --cap-drop=all --name boringnginx -d -p 80:8080 ajhaydock/boringnginx
 #
 # To build and run this container locally, try a command like:
 #
 #        docker build -t boringnginx .
-#        docker run --cap-drop=all --name nginx -d -p 80:8080 boringnginx
+#        docker run --cap-drop=all --name boringnginx -d -p 80:8080 boringnginx
 #
 
-FROM debian:stretch
+FROM centos:7
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
+# Nginx Version (See: https://nginx.org/en/CHANGES)
 ENV NGXVERSION 1.11.10
 ENV NGXSIGKEY B0F4253373F8F6F510D42178520A9993A1C052F8
 
-# Build as root
+# PageSpeed Version (See: https://modpagespeed.com/doc/release_notes)
+ENV PSPDVER latest-beta
+
+# Build as root (we drop privileges later when actually running the container)
 USER root
 WORKDIR /root
 
-# Install deps
-RUN apt-get install -y \
-      build-essential \
-      ca-certificates \
-      cmake \
-      curl \
-      dirmngr \
-      git \
-      gnupg \
-      golang \
-      libcurl4-openssl-dev \
-      libncurses5-dev \
-      libpcre3-dev \
-      libssl-dev \
-      make \
-      nano \
-      openssl \
-      wget \
-      zlib1g-dev && \
-    rm -rf /var/lib/apt/lists/*
+# Add 'nginx' user
+RUN useradd nginx --home-dir /usr/share/nginx --no-create-home --shell /sbin/nologin
 
-# Build BoringSSL
+# Update & install deps
+RUN yum install -y \
+        cmake \
+        gcc \
+        gcc-c++ \
+        GeoIP-devel \
+        git \
+	golang \
+        gperftools-devel \
+        make \
+        patch \
+        pcre-devel \
+        tar \
+        unzip \
+        wget \
+        zlib-devel && \
+    yum clean all
+
+# Copy nginx source into container
+COPY src/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
+COPY src/$NGXVERSION.patch boring.patch
+
+# Import nginx team signing keys to verify the source code tarball
+RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys $NGXSIGKEY
+
+# Verify this source has been signed with a valid nginx team key
+RUN wget "https://nginx.org/download/nginx-$NGXVERSION.tar.gz.asc" && \
+    out=$(gpg --status-fd 1 --verify "nginx-$NGXVERSION.tar.gz.asc" 2>/dev/null) && \
+    if echo "$out" | grep -qs "\[GNUPG:\] GOODSIG" && echo "$out" | grep -qs "\[GNUPG:\] VALIDSIG"; then echo "Good signature on nginx source file."; else echo "GPG VERIFICATION OF SOURCE CODE FAILED!" && echo "EXITING!" && exit 100; fi
+
+# Download PageSpeed
+RUN wget https://github.com/pagespeed/ngx_pagespeed/archive/$PSPDVER.tar.gz && \
+    tar -xzvf $PSPDVER.tar.gz && \
+    rm -v $PSPDVER.tar.gz && \
+    cd ngx_pagespeed-$PSPDVER/ && \
+    echo "Downloading PSOL binary from the URL specified in the PSOL_BINARY_URL file..." && \
+    PSOLURL=$(cat PSOL_BINARY_URL | grep https: | sed 's/$BIT_SIZE_NAME/x64/g') && \
+    wget $PSOLURL && \
+    tar -xzvf *.tar.gz && \
+    rm -v *.tar.gz
+
+# Download and build BoringSSL
 RUN git clone https://boringssl.googlesource.com/boringssl "$HOME/boringssl" && \
     mkdir "$HOME/boringssl/build/" && \
     cd "$HOME/boringssl/build/" && \
@@ -51,73 +78,86 @@ RUN git clone https://boringssl.googlesource.com/boringssl "$HOME/boringssl" && 
     cd "$HOME/boringssl" && \
     cp "build/crypto/libcrypto.a" "build/ssl/libssl.a" ".openssl/lib"
 
-# Copy some requirements for building and running nginx into our new container
-COPY src/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
-COPY src/$NGXVERSION.patch boring.patch
-
-# Import nginx team signing keys to verify the source code tarball
-RUN gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys $NGXSIGKEY
-
-# Verify this source has been signed with a valid nginx team key
-RUN wget --https-only "https://nginx.org/download/nginx-$NGXVERSION.tar.gz.asc" && \
-    out=$(gpg --status-fd 1 --verify "nginx-$NGXVERSION.tar.gz.asc" 2>/dev/null) && \
-    if echo "$out" | grep -qs "\[GNUPG:\] GOODSIG" && echo "$out" | grep -qs "\[GNUPG:\] VALIDSIG"; then echo "Good signature on nginx source file."; else echo "GPG VERIFICATION OF SOURCE CODE FAILED!" && echo "EXITING!" && exit 100; fi
-
 # Download additional modules
 RUN git clone https://github.com/openresty/headers-more-nginx-module.git "$HOME/ngx_headers_more" && \
     git clone https://github.com/simpl/ngx_devel_kit.git "$HOME/ngx_devel_kit" && \
     git clone https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git "$HOME/ngx_subs_filter"
 
 # Prepare nginx source
-RUN tar -xzvf nginx-$NGNXVER.tar.gz && \
-    rm -v nginx-$NGNXVER.tar.gz
+RUN tar -xzvf nginx-$NGXVERSION.tar.gz && \
+    rm -v nginx-$NGXVERSION.tar.gz
 
 # Switch directory
-WORKDIR "$HOME/nginx-$NGXVERSION/"
+WORKDIR "/root/nginx-$NGXVERSION/"
 
-# Configure nginx
-RUN ./configure --prefix=/usr/share/nginx \
-      --sbin-path=/usr/sbin/nginx \
-      --conf-path=/etc/nginx/nginx.conf \
-      --error-log-path=/var/log/nginx/error.log \
-      --http-log-path=/var/log/nginx/access.log \
-      --pid-path=/run/nginx.pid \
-      --lock-path=/run/lock/subsys/nginx \
-      --user=www-data \
-      --group=www-data \
-      --with-threads \
-      --with-file-aio \
-      --with-http_ssl_module \
-      --with-http_v2_module \
-      --with-http_realip_module \
-      --with-http_gunzip_module \
-      --with-http_gzip_static_module \
-      --with-http_slice_module \
-      --with-http_stub_status_module \
-      --without-select_module \
-      --without-poll_module \
-      --without-mail_pop3_module \
-      --without-mail_imap_module \
-      --without-mail_smtp_module \
-      --with-cc-opt="-g -O2 -fPIE -fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -I ../boringssl/.openssl/include/" \
-      --with-ld-opt="-Wl,-Bsymbolic-functions -Wl,-z,relro -L ../boringssl/.openssl/lib" \
-      --with-openssl="$HOME/boringssl" \
-      --add-module="$HOME/ngx_pagespeed-$PSPDVER" \
-      --add-module="$HOME/ngx_headers_more" \
-      --add-module="$HOME/ngx_devel_kit" \
-      --add-module="$HOME/ngx_subs_filter" && \
+# Configure Nginx
+# Config options stolen from the current packaged version of nginx for Fedora 25.
+# cc-opt tweaked to use -fstack-protector-all, and -fPIE added to build position-independent.
+# Removed any of the modules that the Fedora team was building with "=dynamic" as they stop us being able
+# to build with -fPIE and require the less-hardened -fPIC option instead. (https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html)
+# Also removed the --with-debug flag (I don't need debug-level logging) and --with-ipv6 as the flag is now deprecated.
+# Removed all the mail modules as I have no intention of using this as a mailserver proxy.
+# The final tweaks are my --add-module lines at the bottom, and the --with-openssl
+# argument, to point the build to the OpenSSL Beta we downloaded earlier.
+RUN ./configure \
+        --prefix=/usr/share/nginx \
+        --sbin-path=/usr/sbin/nginx \
+        --modules-path=/usr/lib64/nginx/modules \
+        --conf-path=/etc/nginx/nginx.conf \
+        --error-log-path=/var/log/nginx/error.log \
+        --http-log-path=/var/log/nginx/access.log \
+        --http-client-body-temp-path=/var/lib/nginx/tmp/client_body \
+        --http-proxy-temp-path=/var/lib/nginx/tmp/proxy \
+        --http-fastcgi-temp-path=/var/lib/nginx/tmp/fastcgi \
+        --http-uwsgi-temp-path=/var/lib/nginx/tmp/uwsgi \
+        --http-scgi-temp-path=/var/lib/nginx/tmp/scgi \
+        --pid-path=/run/nginx.pid \
+        --lock-path=/run/lock/subsys/nginx \
+        --user=nginx \
+        --group=nginx \
+        --with-file-aio \
+        --with-http_ssl_module \
+        --with-http_v2_module \
+        --with-http_realip_module \
+        --with-http_addition_module \
+        --with-http_sub_module \
+        --with-http_dav_module \
+        --with-http_flv_module \
+        --with-http_mp4_module \
+        --with-http_geoip_module \
+        --with-http_gunzip_module \
+        --with-http_gzip_static_module \
+        --with-http_random_index_module \
+        --with-http_secure_link_module \
+        --with-http_degradation_module \
+        --with-http_slice_module \
+        --with-http_stub_status_module \
+        --with-pcre \
+        --with-pcre-jit \
+        --with-stream \
+        --with-stream_ssl_module \
+        --with-google_perftools_module \
+        --with-cc-opt='-O2 -g -fPIE -pipe -Wall -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all --param=ssp-buffer-size=4 -grecord-gcc-switches -I ../boringssl/.openssl/include/' \
+        --with-ld-opt='-Wl,-z,relro -Wl,-E' \
+        --with-openssl="$HOME/boringssl" \
+        --add-module="$HOME/ngx_pagespeed-$PSPDVER" \
+        --add-module="$HOME/ngx_headers_more" \
+        --add-module="$HOME/ngx_devel_kit" \
+        --add-module="$HOME/ngx_subs_filter" && \
     touch "$HOME/boringssl/.openssl/include/openssl/ssl.h"
 
-# Patch and build nginx
+# Build Nginx
 RUN patch -p1 < "$HOME/boring.patch" && \
     make && \
     make install
 
 # Make sure the permissions are set correctly on our webroot, logdir and pidfile so that we can run the webserver as non-root.
-RUN chown -R www-data:www-data /usr/share/nginx && \
-    chown -R www-data:www-data /var/log/nginx && \
+RUN chown -R nginx:nginx /usr/share/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    mkdir -p /var/lib/nginx/tmp && \
+    chown -R nginx:nginx /var/lib/nginx && \
     touch /run/nginx.pid && \
-    chown -R www-data:www-data /run/nginx.pid
+    chown -R nginx:nginx /run/nginx.pid
 
 # Configure nginx to listen on 8080 instead of 80 (we can't bind to <1024 as non-root)
 RUN perl -pi -e 's,80;,8080;,' /etc/nginx/nginx.conf
@@ -126,7 +166,7 @@ RUN perl -pi -e 's,80;,8080;,' /etc/nginx/nginx.conf
 RUN nginx -V
 
 # Launch Nginx in container as non-root
-USER www-data
+USER nginx
 WORKDIR /usr/share/nginx
 
 # Launch command

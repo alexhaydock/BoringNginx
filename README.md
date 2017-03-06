@@ -5,22 +5,30 @@ Build script to build current stable Nginx with Google's BoringSSL instead of th
 
 Currently, this build script only supports the **latest mainline release** of Nginx.
 
+If you are looking to build Nginx against the latest OpenSSL Beta instead, please check out [this repo here](https://github.com/ajhaydock/Nginx-PageSpeed-OpenSSLBeta).
+
 To build latest supported version:
 ```
 ./build-debian.sh
 ```
 
-### WARNING!
+-----------------------------------------
+
+
+### Disclaimer
 I don't recommend running this script on any production machines without going through and testing it first. It's designed to go through and remove any existing `nginx` installation, then compiles nginx and assumes you then want it installed too. It does everything in `/tmp`, which might work for some people, but you might want to change this for other reasons. I'm also not sure how it might interact with other complex setups that people may be running.
 
 If you're running this on a blank machine or inside a Docker container or something, then go right ahead... it should set everything up for you and work pretty much out of the box - but if you're installing this to replace your current version of `nginx` on a production server, I'd recommend maybe going through and running each command manually on an individual basis, or at least testing the script first, then tweaking it to your needs.
 
 With that out of the way, I hope you find some use for this script or these patches. Enjoy! :)
 
-### Quick Deployment (Docker)
-This is currently a work in progress, but seems to be working well so far. I have also deployed this [on Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) (linked to this GitHub repo) to speed up deployment even further.
+-----------------------------------------
 
-The Docker Hub images allow for instant setup of a working instance under my custom nginx+BoringSSL build. You can deploy a test version of this instance (currently built on top of Docker's official `debian:jessie` image:
+
+### Quick Deployment with Docker (Recommended!)
+[![](https://images.microbadger.com/badges/image/ajhaydock/boringnginx.svg)](https://microbadger.com/images/ajhaydock/boringnginx "Get your own image badge on microbadger.com")
+
+The [Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) images for this project allow for mostly instant setup of a working instance of my BoringNginx build. You can deploy a test version of this instance (currently built on top of Docker's official CentOS 7 image:
 ```
 docker run --cap-drop=all --name nginx -d -p 80:8080 ajhaydock/boringnginx
 ```
@@ -41,6 +49,9 @@ You can also automate the run command with a systemd service or something simila
 
 Obviously, this built container will not contain any of your site data, your `nginx.conf,` or your SSL keys. You probably want to look at the [Docker Volumes](https://docs.docker.com/engine/tutorials/dockervolumes/) documentation for information on giving the container access to these in a location on your host machine. This will probably be done by adding a few `-v` flags to the `docker run` examples above.
 
+-----------------------------------------
+
+
 ### Enabling PHP
 To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package (`php-fpm` on Fedora) and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
 
@@ -58,6 +69,9 @@ To enable PHP, I add the following to my `nginx.conf` server block. The `try_fil
 ```
 
 You will also need to ensure that the `index` directive of your site is set up to serve `index.php` files.
+
+-----------------------------------------
+
 
 ### Enabling Passenger (for Ruby-on-Rails)
 To enable [Phusion Passenger](https://www.phusionpassenger.com/) in Nginx, you need to compile the Passenger module into Nginx. Passenger has a helpful script to do this for you (`passenger-install-nginx-module`), but that makes it difficult to also compile against BoringSSL. Instead, I have developed a version of this script tweaked for Passenger that you can run after installing the Passenger gem and hopefully enable full Passenger support in Nginx.
