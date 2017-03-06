@@ -3,14 +3,11 @@ BoringNginx
 <img align="right" src="https://raw.githubusercontent.com/ajhaydock/BoringNginx/master/nginx.png" alt="Nginx Logo" title="Nginx">
 Build script to build current stable Nginx with Google's BoringSSL instead of the default OpenSSL.
 
+Currently, this build script only supports the **latest mainline release** of Nginx.
+
 To build latest supported version:
 ```
 ./build-debian.sh
-```
-
-To build a specific version (if supported):
-```
-./build-debian.sh 1.11.8
 ```
 
 ### WARNING!
