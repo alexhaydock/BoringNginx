@@ -8,7 +8,7 @@ Currently, this build script only supports the **latest mainline release** of Ng
 If you are looking to build Nginx against the latest OpenSSL Beta instead, please check out [this repo here](https://github.com/ajhaydock/Nginx-PageSpeed-OpenSSLBeta).
 
 To build latest supported version:
-```
+```bash
 ./build-debian.sh
 ```
 
@@ -28,20 +28,20 @@ With that out of the way, I hope you find some use for this script or these patc
 ### Quick Deployment with Docker (Recommended!)
 [![](https://images.microbadger.com/badges/image/ajhaydock/boringnginx.svg)](https://microbadger.com/images/ajhaydock/boringnginx "Get your own image badge on microbadger.com")
 
-The [Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) images for this project allow for mostly instant setup of a working instance of my BoringNginx build. You can deploy a test version of this instance (currently built on top of Docker's official CentOS 7 image:
-```
-docker run --cap-drop=all --name nginx -d -p 80:8080 ajhaydock/boringnginx
+The [Docker Hub](https://hub.docker.com/r/ajhaydock/boringnginx/) images for this project allow for mostly instant setup of a working instance of my BoringNginx build. You can deploy a test version of this instance (currently built on top of Docker's official CentOS 7 image):
+```bash
+docker run --cap-drop=all --name boringnginx -d -p 80:8080 ajhaydock/boringnginx
 ```
 
 Alternatively, you can clone this repo and build the Docker container directly.
 
 Enter the directory containing the Dockerfile you want to build an image for, and build it with something like:
-```
+```bash
 docker build -t boringnginx .
 ```
 
 Running a manually-built container is similar to the above:
-```
+```bash
 docker run --cap-drop=all --name nginx -d -p 80:8080 boringnginx
 ```
 
@@ -53,7 +53,7 @@ Obviously, this built container will not contain any of your site data, your `ng
 
 
 ### Enabling PHP
-To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package (`php-fpm` on Fedora) and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have now tested this).
+To enable PHP on this installation of nginx, it is as simple as installing the `php5-fpm` package (`php-fpm` on CentOS/Fedora) and adding the regular PHP directives to your `/etc/nginx/nginx.conf` file. On Grsec/PaX kernels you do not need to set any MPROTECT exceptions on any binaries to get a fully working server with PHP support (I have tested this).
 
 To enable PHP, I add the following to my `nginx.conf` server block. The `try_files` directive ensures that Nginx does not forward bad requests to the PHP processor, but you may need to tweak this for your specific web application:
 ```nginx

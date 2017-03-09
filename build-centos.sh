@@ -35,27 +35,31 @@ do
 done
 if [ "$CONFIRMED" -eq 0 ]; then echo -e "Something went wrong.\nExiting." && exit 1; fi
 
-# Install deps & remove old nginx if we installed it with apt
+# Install deps & remove old nginx if we installed it with yum
 sudo systemctl stop nginx
 sudo systemctl disable nginx
 
-sudo apt remove \
+sudo yum remove \
   nginx \
   nginx-common \
   nginx-full \
   nginx-light
 
-sudo apt install \
-  build-essential \
+sudo yum install \
   cmake \
+  gcc \
+  gcc-c++ \
+  GeoIP-devel \
   git \
-  gnupg \
-  gnupg-curl \
   golang \
-  libpcre3-dev \
+  gperftools-devel \
+  make \
+  patch \
+  pcre-devel \
+  tar \
+  unzip \
   wget \
-  zlib1g-dev \
-  libcurl4-openssl-dev
+  zlib-devel
 
 # Build BoringSSL
 git clone https://boringssl.googlesource.com/boringssl "$BDIR/boringssl"
@@ -141,8 +145,8 @@ $WITHROOT./configure \
         --http-scgi-temp-path=/var/lib/nginx/tmp/scgi \
         --pid-path=/run/nginx.pid \
         --lock-path=/run/lock/subsys/nginx \
-        --user=www-data \
-        --group=www-data \
+        --user=nginx \
+        --group=nginx \
         --with-file-aio \
         --with-http_ssl_module \
         --with-http_v2_module \

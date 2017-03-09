@@ -32,7 +32,7 @@ RUN yum install -y \
         gcc-c++ \
         GeoIP-devel \
         git \
-	golang \
+        golang \
         gperftools-devel \
         make \
         patch \
