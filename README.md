@@ -7,9 +7,12 @@ Currently, this build script only supports the **latest mainline release** of Ng
 
 If you are looking to build Nginx against the latest OpenSSL Beta instead, please check out [this repo here](https://github.com/ajhaydock/Nginx-PageSpeed-OpenSSLBeta).
 
-To build latest supported version:
+To build latest supported version (Debian and CentOS supported):
 ```bash
 ./build-debian.sh
+```
+```bash
+./build-centos.sh
 ```
 
 -----------------------------------------

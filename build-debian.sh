@@ -171,8 +171,8 @@ $WITHROOT./configure \
         --add-module="$HOME/ngx_pagespeed-$PSPDVER" \
         --add-module="$HOME/ngx_headers_more" \
         --add-module="$HOME/ngx_devel_kit" \
-        --add-module="$HOME/ngx_subs_filter" && \
-    touch "$HOME/boringssl/.openssl/include/openssl/ssl.h"
+        --add-module="$HOME/ngx_subs_filter" \
+        $EXTRACONFIG
 
 # Fix "Error 127" during build
 touch "$BDIR/boringssl/.openssl/include/openssl/ssl.h"
