@@ -12,7 +12,7 @@ FROM centos:7
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
-ENV NGXVERSION 1.11.10
+ENV NGXVERSION 1.11.12
 ENV NGXSIGKEY B0F4253373F8F6F510D42178520A9993A1C052F8
 
 # PageSpeed Version (See: https://modpagespeed.com/doc/release_notes)
@@ -45,7 +45,7 @@ RUN yum install -y \
 
 # Copy nginx source into container
 COPY src/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
-COPY src/$NGXVERSION.patch boring.patch
+COPY src/boring.patch boring.patch
 
 # Import nginx team signing keys to verify the source code tarball
 RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys $NGXSIGKEY

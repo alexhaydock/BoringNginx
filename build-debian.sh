@@ -2,7 +2,7 @@
 set -u
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
-LATESTNGINX="1.11.10" # Set current nginx version here
+LATESTNGINX="1.11.12" # Set current nginx version here
 
 SCRIPTDIR=$( cd $(dirname $0) ; pwd -P ) # Find out what directory we're running in
 BDIR="/tmp/boringnginx-$RANDOM" # Set  target build directory
@@ -83,7 +83,7 @@ gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys $NGXSIGKEY
 
 # Verify and extract nginx sources
 cp -f -v "$SCRIPTDIR/src/nginx-$NGXVER.tar.gz" "$BDIR/nginx-$NGXVER.tar.gz"
-cp -f -v "$SCRIPTDIR/src/$NGXVER.patch" "$BDIR/$NGXVER.patch"
+cp -f -v "$SCRIPTDIR/src/boring.patch" "$BDIR/boring.patch"
 if [ ! -f "nginx-$NGXVER.tar.gz" ]; then echo -e "\nFailed to find nginx $NGXVER sources!" && exit 2; fi
 
 verify_sig() {
@@ -178,7 +178,7 @@ $WITHROOT./configure \
 touch "$BDIR/boringssl/.openssl/include/openssl/ssl.h"
 
 # Fix some other build errors caused by nginx expecting OpenSSL
-patch -p1 < "../src/$NGXVER.patch"
+patch -p1 < "$BDIR/boring.patch"
 
 # Build nginx
 make # Fortunately we can get away without root here, even for Passenger installs
