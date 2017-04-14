@@ -2,7 +2,7 @@
 set -u
 if [ "$(id -u)" -eq 0 ]; then echo -e "This script is not intended to be run as root.\nExiting." && exit 1; fi
 
-LATESTNGINX="1.11.12" # Set current nginx version here
+LATESTNGINX="1.12.0" # Set current nginx version here
 
 SCRIPTDIR=$( cd $(dirname $0) ; pwd -P ) # Find out what directory we're running in
 BDIR="/tmp/boringnginx-$RANDOM" # Set  target build directory
