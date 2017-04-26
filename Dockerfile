@@ -12,7 +12,7 @@ FROM centos:7
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
-ENV NGXVERSION 1.12.0
+ENV NGXVERSION 1.13.0
 ENV NGXSIGKEY B0F4253373F8F6F510D42178520A9993A1C052F8
 
 # PageSpeed Version (See: https://modpagespeed.com/doc/release_notes)
