@@ -140,6 +140,7 @@ RUN ./configure \
         --with-cc-opt='-fPIE -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -I ../boringssl/.openssl/include/' \
         --with-ld-opt='-Wl,-z,relro' \
         --with-openssl="$HOME/boringssl" \
+        --with-openssl-opt=enable-tls1_3 \
         --add-module="$HOME/ngx_pagespeed-$PSPDVER" \
         --add-module="$HOME/ngx_headers_more" \
         --add-module="$HOME/ngx_devel_kit" \
