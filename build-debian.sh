@@ -57,9 +57,11 @@ sudo apt install \
   zlib1g-dev \
   libcurl4-openssl-dev
 
-# Build BoringSSL
+# Download and build BoringSSL
+# (Also patch it to report itself as OpenSSL 1.1.1 to trick Nginx into allowing us to use TLS v1.3)
 git clone https://boringssl.googlesource.com/boringssl "$BDIR/boringssl"
 cd "$BDIR/boringssl"
+patch -p1 < "$SCRIPTDIR/src/boringssl.patch"
 mkdir build && cd build
 cmake ../
 make
@@ -83,7 +85,7 @@ gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys $NGXSIGKEY
 
 # Verify and extract nginx sources
 cp -f -v "$SCRIPTDIR/src/nginx-$NGXVER.tar.gz" "$BDIR/nginx-$NGXVER.tar.gz"
-cp -f -v "$SCRIPTDIR/src/boring.patch" "$BDIR/boring.patch"
+cp -f -v "$SCRIPTDIR/src/nginx.patch" "$BDIR/nginx.patch"
 if [ ! -f "nginx-$NGXVER.tar.gz" ]; then echo -e "\nFailed to find nginx $NGXVER sources!" && exit 2; fi
 
 verify_sig() {
@@ -179,7 +181,7 @@ $WITHROOT./configure \
 touch "$BDIR/boringssl/.openssl/include/openssl/ssl.h"
 
 # Fix some other build errors caused by nginx expecting OpenSSL
-patch -p1 < "$BDIR/boring.patch"
+patch -p1 < "$BDIR/nginx.patch"
 
 # Build nginx
 make # Fortunately we can get away without root here, even for Passenger installs

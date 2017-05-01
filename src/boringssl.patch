@@ -1,0 +1,12 @@
+diff -ur boringssl/include/openssl/crypto.h boringssl-patched/include/openssl/crypto.h
+--- boringssl/include/openssl/crypto.h	2017-05-01 16:21:36.122857719 +0100
++++ boringssl-patched/include/openssl/crypto.h	2017-05-01 16:22:16.582880535 +0100
+@@ -63,7 +63,7 @@
+ 
+ /* OPENSSL_VERSION_TEXT contains a string the identifies the version of
+  * “OpenSSL”. node.js requires a version number in this text. */
+-#define OPENSSL_VERSION_TEXT "OpenSSL 1.0.2 (compatible; BoringSSL)"
++ #define OPENSSL_VERSION_TEXT "OpenSSL 1.1.1"
+ 
+ #define SSLEAY_VERSION 0
+ 

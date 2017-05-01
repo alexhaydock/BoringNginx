@@ -45,7 +45,8 @@ RUN yum install -y \
 
 # Copy nginx source into container
 COPY src/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
-COPY src/boring.patch boring.patch
+COPY src/nginx.patch nginx.patch
+COPY src/boringssl.patch boringssl.patch
 
 # Import nginx team signing keys to verify the source code tarball
 RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys $NGXSIGKEY
@@ -67,7 +68,9 @@ RUN wget https://github.com/pagespeed/ngx_pagespeed/archive/$PSPDVER.tar.gz && \
     rm -v *.tar.gz
 
 # Download and build BoringSSL
+# (Also patch it to report itself as OpenSSL 1.1.1 to trick Nginx into allowing us to use TLS v1.3)
 RUN git clone https://boringssl.googlesource.com/boringssl "$HOME/boringssl" && \
+    cd "$HOME/boringssl" && patch -p1 < "$HOME/boringssl.patch" && \
     mkdir "$HOME/boringssl/build/" && \
     cd "$HOME/boringssl/build/" && \
     cmake ../ && \
@@ -148,7 +151,7 @@ RUN ./configure \
     touch "$HOME/boringssl/.openssl/include/openssl/ssl.h"
 
 # Build Nginx
-RUN patch -p1 < "$HOME/boring.patch" && \
+RUN patch -p1 < "$HOME/nginx.patch" && \
     make && \
     make install
 
