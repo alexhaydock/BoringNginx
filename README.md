@@ -50,7 +50,7 @@ docker run --cap-drop=all --name nginx -d -p 80:8080 boringnginx
 
 You can also automate the run command with a systemd service or something similar. This is probably how you will want to do it if you're customising this and using it to deploy a site in production. Creating a systemd service that calls the `docker run` command means you will end up with a webserver that basically operates as a normal installation of nginx would operate - but containerized as an all-in-one distribution.
 
-Obviously, this built container will not contain any of your site data, your `nginx.conf,` or your SSL keys. You probably want to look at the [Docker Volumes](https://docs.docker.com/engine/tutorials/dockervolumes/) documentation for information on giving the container access to these in a location on your host machine. This will probably be done by adding a few `-v` flags to the `docker run` examples above.
+Obviously, this built container will not contain any of your site data, your `nginx.conf,` or your SSL keys. You probably want to look at the [Docker Volumes](https://docs.docker.com/engine/tutorials/dockervolumes/) documentation for information on giving the container access to these in a location on your host machine. This will probably be done by adding a few `-v` flags to the `docker run` examples above. Please note that the user the nginx process runs under within the container will have the UID of `666` by default, and any files or directories you pass through to the container should be owned by this UID (it does not matter if there is no user with this UID on your host system).
 
 -----------------------------------------
 
