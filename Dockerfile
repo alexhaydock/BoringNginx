@@ -8,7 +8,7 @@
 #        docker run --cap-drop=all --name boringnginx -d -p 80:8080 boringnginx
 #
 
-FROM centos:7
+FROM alpine
 MAINTAINER Alex Haydock <alex@alexhaydock.co.uk>
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
@@ -23,33 +23,34 @@ USER root
 WORKDIR /root
 
 # Add 'nginx' user
-RUN useradd nginx --home-dir /usr/share/nginx --no-create-home --shell /sbin/nologin
+RUN adduser nginx -S -u 666  -h /usr/share/nginx -H
 
 # Update & install deps
-RUN yum install -y \
-        cmake \
-        gcc \
-        gcc-c++ \
-        GeoIP-devel \
-        git \
-        golang \
-        gperftools-devel \
-        make \
-        patch \
-        pcre-devel \
-        tar \
-        unzip \
-        wget \
-        zlib-devel && \
-    yum clean all
+RUN apk update && \
+    apk add \
+      cmake \
+      g++ \
+      gcc \
+      geoip-dev \
+      git \
+      go \
+      gnupg \
+      make \
+      patch \
+      pcre-dev \
+      perl \
+      tar \
+      unzip \
+      wget \
+      zlib-dev
 
 # Copy nginx source into container
 COPY src/nginx-$NGXVERSION.tar.gz nginx-$NGXVERSION.tar.gz
 COPY src/nginx.patch nginx.patch
 COPY src/boringssl.patch boringssl.patch
 
-# Import nginx team signing keys to verify the source code tarball
-RUN gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys $NGXSIGKEY
+# Import nginx team signing keys to verify the source code tarball (Cannot use HKPS yet with Alpine's version of gnupg)
+RUN gpg --keyserver hkp://keyserver.ubuntu.com --recv-keys $NGXSIGKEY
 
 # Verify this source has been signed with a valid nginx team key
 RUN wget "https://nginx.org/download/nginx-$NGXVERSION.tar.gz.asc" && \
@@ -165,6 +166,14 @@ RUN chown -R nginx:nginx /usr/share/nginx && \
 
 # Configure nginx to listen on 8080 instead of 80 (we can't bind to <1024 as non-root)
 RUN perl -pi -e 's,80;,8080;,' /etc/nginx/nginx.conf
+
+# Remove some packages (Doesn't save space because of container's CoW design, but might add a bit of security)
+RUN apk del \
+      cmake \
+      g++ \
+      gcc \
+      go \
+      make \
 
 # Print built version
 RUN nginx -V
