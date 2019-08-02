@@ -4,19 +4,19 @@ This container builds the [latest stable Nginx](https://nginx.org/en/CHANGES) wi
 
 There are versions of this container which build against:
 * [BoringSSL](https://gitlab.com/alexhaydock/boringnginx)
-* [LibreSSL](https://github.com/alexhaydock/nginx-libressl-latest)
-* [OpenSSL](https://github.com/alexhaydock/nginx-openssl-latest)
+* [LibreSSL](https://gitlab.com/alexhaydock/nginx-libressl)
+* [OpenSSL](https://gitlab.com/alexhaydock/nginx-openssl)
 
 ### Quick Run This Container (Testing on x86_64)
 Run this container as a quick test (it will listen on http://127.0.0.1 and you will see logs directly in the terminal when connections are made):
 ```
-docker run --rm -it -p 80:80 gitlab.com/alexhaydock/boringnginx
+docker run --rm -it -p 80:80 registry.gitlab.com/alexhaydock/boringnginx
 ```
 
 ### Quick Run This Container (Production on x86_64)
 Run this container as a daemon with your own config file:
 ```
-docker run -d -p 80:80 -p 443:443 -v /path/to/nginx.conf:/etc/nginx.conf:ro --name nginx gitlab.com/alexhaydock/boringnginx
+docker run -d -p 80:80 -p 443:443 -v /path/to/nginx.conf:/etc/nginx.conf:ro --name nginx registry.gitlab.com/alexhaydock/boringnginx
 ```
 
 ### Build This Container Locally
@@ -25,12 +25,12 @@ If you have a regular install of Docker on an `x64_64` machine, you can build th
 docker build --rm -t boringnginx https://gitlab.com/alexhaydock/boringnginx.git
 ```
 
-You can now use the same run commands as above, simply substituting `gitlab.com/alexhaydock/boringnginx` with `boringnginx`.
+You can now use the same run commands as above, simply substituting `registry.gitlab.com/alexhaydock/boringnginx` with `boringnginx`.
 
 ### Running Without Root
 You can lock down this container and run without root and dropping all capabilities by using the `--user` and `--cap-drop=ALL` arguments:
 ```
-docker run --rm -it -p 80:8080 --user 6666 --cap-drop=ALL gitlab.com/alexhaydock/boringnginx
+docker run --rm -it -p 80:8080 --user 6666 --cap-drop=ALL registry.gitlab.com/alexhaydock/boringnginx
 ```
 
 You will need to make sure that the UID you pick matches the one you have set as the `NGINX_ID` in the `Dockerfile`, and that any configs which you mount into the container are owned by this UID (it does not need to exist on the host system).
