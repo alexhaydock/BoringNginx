@@ -230,8 +230,8 @@ RUN set -xe \
     \
 # Add the default Nginx config files
 # (these are pulled directly from the Nginx team's Docker repo without modification)
-    && wget https://raw.githubusercontent.com/nginxinc/docker-nginx/master/mainline/alpine/nginx.conf -O /etc/nginx/nginx.conf \
-    && wget https://raw.githubusercontent.com/nginxinc/docker-nginx/master/mainline/alpine/nginx.vh.default.conf -O /etc/nginx/conf.d/default.conf \
+    && wget https://hg.nginx.org/pkg-oss/raw-file/tip/alpine/nginx.conf -O /etc/nginx/nginx.conf \
+    && wget https://hg.nginx.org/pkg-oss/raw-file/tip/alpine/default.conf -O /etc/nginx/conf.d/default.conf \
     \
 # Remove our virtual metapackages
     && apk del .installdeps .gettext \
