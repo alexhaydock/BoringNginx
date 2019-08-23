@@ -174,7 +174,7 @@ RUN echo "$NGINX_ID" > /tmp/buildsource/nginx_id
 
 
 # --- Runtime Container --- #
-FROM alpine:3.9
+FROM alpine:3.10
 LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
 
 COPY --from=builder /tmp/buildsource /usr/src
