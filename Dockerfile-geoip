@@ -1,6 +1,13 @@
 # Most of the below is based on the Nginx Team's Alpine Dockerfile
 #   https://github.com/nginxinc/docker-nginx/blob/e3e35236b2c77e02266955c875b74bdbceb79c44/mainline/alpine/Dockerfile
 
+# --- MaxMind GeoIP Container --- #
+FROM ubuntu:19.10 as geoip
+RUN apt-get update && apt-get install geoipupdate -y
+COPY GeoIP.conf /etc/GeoIP.conf
+RUN geoipupdate -v
+
+
 # --- Nginx Build Container --- #
 FROM alpine as builder
 LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
@@ -59,6 +66,7 @@ ARG CONFIG="\
     --with-cc-opt=-I'/usr/src/boringssl/.openssl/include/' \
     --add-module=/usr/src/modules/ngx_headers_more \
     --add-module=/usr/src/modules/ngx_subs_filter \
+    --add-module=/usr/src/modules/ngx_http_geoip2_module \
     --add-module=/usr/src/modules/ngx_brotli \
 "
 
@@ -89,6 +97,7 @@ RUN set -xe \
     && mkdir -p /usr/src/modules \
     && git clone --depth 1 https://github.com/openresty/headers-more-nginx-module.git /usr/src/modules/ngx_headers_more \
     && git clone --depth 1 https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /usr/src/modules/ngx_subs_filter \
+    && git clone --depth 1 https://github.com/leev/ngx_http_geoip2_module.git /usr/src/modules/ngx_http_geoip2_module \
     && git clone --depth 1 https://github.com/google/ngx_brotli.git /usr/src/modules/ngx_brotli \
     && cd /usr/src/modules/ngx_brotli && git submodule update --init \
     \
@@ -168,6 +177,8 @@ FROM alpine
 LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
 
 COPY --from=builder /tmp/buildsource /usr/src
+# See this page for GeoIP info: https://github.com/leev/ngx_http_geoip2_module#example-usage
+COPY --from=geoip /var/lib/GeoIP/GeoLite2-Country.mmdb /var/lib/GeoIP/GeoLite2-Country.mmdb
 
 RUN set -xe \
     \
