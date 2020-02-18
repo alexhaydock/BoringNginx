@@ -1,13 +1,14 @@
-build:
-  stage: build 
-  image: 
-    name: docker/compose
-    entrypoint: ["/bin/sh", "-c"]
-  variables:
-    DOCKER_HOST: tcp://docker:2375
+docker-build:
+  # Official docker image.
+  image: docker:latest
+  stage: build
   services:
     - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build -t "${CI_REGISTRY_IMAGE}" .
+  after_script:
     - docker push "${CI_REGISTRY_IMAGE}"
+  only:
+    - master
