@@ -1,5 +1,7 @@
 # alexhaydock/boringnginx
 
+[![pipeline status](https://gitlab.com/alexhaydock/boringnginx/badges/master/pipeline.svg)](https://gitlab.com/alexhaydock/boringnginx/-/commits/master)
+
 This container builds the [latest stable Nginx](https://nginx.org/en/CHANGES) with the [latest BoringSSL code](https://boringssl.googlesource.com/boringssl/). It was created to aid with the easy deployment of TLS 1.3 services at a time when most Linux distributions were not packaging a version of OpenSSL that could handle it.
 
 This container builds Nginx with the following modules:
