@@ -27,4 +27,5 @@ build:
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker buildx create --use --name mybuilder
-    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --push -t $CI_REGISTRY_IMAGE .
+#    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --push -t $CI_REGISTRY_IMAGE .
+    - docker buildx build --platform linux/amd64 --push -t $CI_REGISTRY_IMAGE .
