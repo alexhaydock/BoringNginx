@@ -11,6 +11,8 @@ RUN geoipupdate -v
 # --- Nginx Build Container --- #
 FROM alpine as builder
 LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
+LABEL name "BoringNginx"
+LABEL version 1.16.1
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
 ENV NGINX_VERSION 1.16.1
@@ -174,7 +176,6 @@ RUN echo "$NGINX_ID" > /tmp/buildsource/nginx_id
 
 # --- Runtime Container --- #
 FROM alpine
-LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
 
 COPY --from=builder /tmp/buildsource /usr/src
 # See this page for GeoIP info: https://github.com/leev/ngx_http_geoip2_module#example-usage

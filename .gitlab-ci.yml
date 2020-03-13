@@ -14,6 +14,13 @@ buildx:
     - git clone git://github.com/docker/buildx ./docker-buildx
     - docker build --platform=local -o . ./docker-buildx
 
+docker-lint:
+  image: projectatomic/dockerfile-lint
+  stage: .pre
+  script:
+    - dockerfile_lint -f Dockerfile
+    - dockerfile_lint -f Dockerfile-geoip
+
 build:
   image: docker:stable
   stage: build
