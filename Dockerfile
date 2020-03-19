@@ -80,7 +80,7 @@ RUN set -xe \
     && mkdir "/usr/src/boringssl/build/" \
     && cd "/usr/src/boringssl/build/" \
     && cmake ../ \
-    && make \
+    && make -j$(getconf _NPROCESSORS_ONLN) \
     && mkdir -p "/usr/src/boringssl/.openssl/lib" \
     && cd "/usr/src/boringssl/.openssl" \
     && ln -s ../include \
