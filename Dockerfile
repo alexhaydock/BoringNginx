@@ -80,7 +80,7 @@ RUN set -xe \
     && mkdir "/usr/src/boringssl/build/" \
     && cd "/usr/src/boringssl/build/" \
     && cmake ../ \
-    && make \
+    && make -j$(getconf _NPROCESSORS_ONLN) \
     && mkdir -p "/usr/src/boringssl/.openssl/lib" \
     && cd "/usr/src/boringssl/.openssl" \
     && ln -s ../include \
@@ -126,7 +126,6 @@ RUN set -xe \
     test -z "$found" && echo >&2 "error: failed to fetch GPG key $NGINX_GPG" && exit 1; \
     gpg --batch --verify nginx.tar.gz.asc nginx.tar.gz \
     && rm -rf "$GNUPGHOME" nginx.tar.gz.asc \
-    && mkdir -p /usr/src \
     && tar -zxC /usr/src -f nginx.tar.gz \
     && rm nginx.tar.gz \
     && mv -v /usr/src/nginx-$NGINX_VERSION /usr/src/nginx
