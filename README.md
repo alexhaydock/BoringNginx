@@ -4,7 +4,7 @@
 
 This container builds the [latest stable Nginx](https://nginx.org/en/CHANGES) with the [latest BoringSSL code](https://boringssl.googlesource.com/boringssl/). It was created to aid with the easy deployment of TLS 1.3 services at a time when most Linux distributions were not packaging a version of OpenSSL that could handle it.
 
-This container is built automatically using GitLab CI and supports the following architectures: `x86_64`, `aarch64`, `armv7l`
+This container is built automatically using GitLab CI and supports the `x86_64` and `aarch64` architectures.
 
 This container builds Nginx with the following modules:
 * [ngx_brotli](https://github.com/google/ngx_brotli.git)
