@@ -2,10 +2,7 @@
 #   https://github.com/nginxinc/docker-nginx/blob/e3e35236b2c77e02266955c875b74bdbceb79c44/mainline/alpine/Dockerfile
 
 # --- Nginx Build Container --- #
-FROM alpine as builder
-LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
-LABEL name "BoringNginx"
-LABEL version 1.16.1
+FROM alpine:3 as builder
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
 ENV NGINX_VERSION 1.16.1
@@ -91,6 +88,7 @@ RUN set -xe \
     && mkdir -p /usr/src/modules \
     && git clone --depth 1 https://github.com/openresty/headers-more-nginx-module.git /usr/src/modules/ngx_headers_more \
     && git clone --depth 1 https://github.com/yaoweibin/ngx_http_substitutions_filter_module.git /usr/src/modules/ngx_subs_filter \
+    && git clone --depth 1 https://github.com/leev/ngx_http_geoip2_module.git /usr/src/modules/ngx_http_geoip2_module \
     && git clone --depth 1 https://github.com/google/ngx_brotli.git /usr/src/modules/ngx_brotli \
     && cd /usr/src/modules/ngx_brotli && git submodule update --init \
     \
@@ -165,7 +163,10 @@ RUN echo "$NGINX_ID" > /tmp/buildsource/nginx_id
 
 
 # --- Runtime Container --- #
-FROM alpine
+FROM alpine:3
+LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
+LABEL name "BoringNginx"
+LABEL version 1.16.1
 
 COPY --from=builder /tmp/buildsource /usr/src
 

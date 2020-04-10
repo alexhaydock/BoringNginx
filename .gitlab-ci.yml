@@ -1,3 +1,4 @@
+---
 # Lint all Dockerfiles in this repo
 docker-lint:
   image: projectatomic/dockerfile-lint

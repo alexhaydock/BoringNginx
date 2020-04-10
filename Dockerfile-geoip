@@ -2,17 +2,14 @@
 #   https://github.com/nginxinc/docker-nginx/blob/e3e35236b2c77e02266955c875b74bdbceb79c44/mainline/alpine/Dockerfile
 
 # --- MaxMind GeoIP Container --- #
-FROM ubuntu:19.10 as geoip
+FROM ubuntu:latest as geoip
 RUN apt-get update && apt-get install geoipupdate -y
 COPY GeoIP.conf /etc/GeoIP.conf
 RUN geoipupdate -v
 
 
 # --- Nginx Build Container --- #
-FROM alpine as builder
-LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
-LABEL name "BoringNginx"
-LABEL version 1.16.1
+FROM alpine:3 as builder
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
 ENV NGINX_VERSION 1.16.1
@@ -174,7 +171,10 @@ RUN echo "$NGINX_ID" > /tmp/buildsource/nginx_id
 
 
 # --- Runtime Container --- #
-FROM alpine
+FROM alpine:3
+LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
+LABEL name "BoringNginx"
+LABEL version 1.16.1
 
 COPY --from=builder /tmp/buildsource /usr/src
 # See this page for GeoIP info: https://github.com/leev/ngx_http_geoip2_module#example-usage
