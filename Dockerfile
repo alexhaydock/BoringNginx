@@ -79,7 +79,7 @@ RUN set -xe \
     && git clone --depth 1 https://boringssl.googlesource.com/boringssl "/usr/src/boringssl" \
     && mkdir "/usr/src/boringssl/build/" \
     && cd "/usr/src/boringssl/build/" \
-    && cmake ../ \
+    && cmake -DCMAKE_BUILD_TYPE=Release ../ \
     && make -j$(getconf _NPROCESSORS_ONLN) \
     && mkdir -p "/usr/src/boringssl/.openssl/lib" \
     && cd "/usr/src/boringssl/.openssl" \
