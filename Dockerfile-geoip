@@ -2,7 +2,7 @@
 #   https://github.com/nginxinc/docker-nginx/blob/e3e35236b2c77e02266955c875b74bdbceb79c44/mainline/alpine/Dockerfile
 
 # --- MaxMind GeoIP Container --- #
-FROM ubuntu:latest as geoip
+FROM ubuntu:focal as geoip
 RUN apt-get update && apt-get install geoipupdate -y
 COPY GeoIP.conf /etc/GeoIP.conf
 RUN geoipupdate -v
