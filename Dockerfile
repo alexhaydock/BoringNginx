@@ -5,7 +5,7 @@
 FROM alpine:3 as builder
 
 # Nginx Version (See: https://nginx.org/en/CHANGES)
-ENV NGINX_VERSION 1.18.0
+ENV NGINX_VERSION 1.19.4
 ENV NGINX_GPG B0F4253373F8F6F510D42178520A9993A1C052F8
 
 # Nginx User UID/GID
@@ -166,7 +166,7 @@ RUN echo "$NGINX_ID" > /tmp/buildsource/nginx_id
 FROM alpine:3
 LABEL maintainer "Alex Haydock <alex@alexhaydock.co.uk>"
 LABEL name "BoringNginx"
-LABEL version 1.18.0
+LABEL version 1.19.4
 
 COPY --from=builder /tmp/buildsource /usr/src
 
